@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nova Curated Matching</title>
+<meta name="description" content="Discover your next valuable connection in the Nova community — curated, not random.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%230EB0A4%22/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B1210;
+    --surface:#121C19;
+    --text:#F3F7F6;
+    --text-muted:#9FB0AC;
+    --accent:#0EB0A4;
+    --accent-bright:#2BD6C7;
+    --border:#22322D;
+  }
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:720px; margin:0 auto; padding:0 24px; }
+  a{ color:inherit; }
+
+  header{ padding:32px 0 0; }
+  .logo{ height:26px; display:block; }
+
+  .hero{ padding:64px 0 56px; text-align:left; }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--accent-bright); margin-bottom:22px;
+  }
+  .eyebrow .dot{ width:6px; height:6px; border-radius:50%; background:var(--accent-bright); }
+  h1{
+    font-family:'Fraunces',Georgia,serif;
+    font-weight:500;
+    font-size:44px;
+    line-height:1.12;
+    letter-spacing:-0.01em;
+    margin:0 0 22px 0;
+    text-wrap:balance;
+  }
+  h1 em{ color:var(--accent-bright); font-style:normal; }
+  .lede{
+    font-size:17px; line-height:1.65; color:var(--text-muted); margin:0 0 36px 0;
+    max-width:56ch;
+  }
+  .cta{
+    display:inline-flex; align-items:center; gap:10px;
+    background:var(--accent); color:#04211E;
+    font-family:'Inter',sans-serif; font-weight:700; font-size:16px;
+    padding:16px 26px; border-radius:12px;
+    text-decoration:none;
+    transition:background .15s ease, transform .1s ease;
+  }
+  .cta:hover{ background:var(--accent-bright); }
+  .cta:active{ transform:scale(0.98); }
+  .cta-note{ margin:14px 0 0 0; font-size:13px; color:var(--text-muted); }
+
+  section.block{ padding:48px 0; border-top:1px solid var(--border); }
+  .kicker{
+    font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--text-muted); margin:0 0 20px 0;
+  }
+  h2{
+    font-family:'Fraunces',Georgia,serif;
+    font-weight:500; font-size:26px; line-height:1.25;
+    margin:0 0 24px 0; text-wrap:balance;
+  }
+
+  .steps{ display:flex; flex-direction:column; gap:20px; }
+  .step{
+    display:flex; gap:18px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:14px; padding:20px 22px;
+  }
+  .step .num{
+    flex:none; width:30px; height:30px; border-radius:50%;
+    background:rgba(14,176,164,0.15); color:var(--accent-bright);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:14px;
+  }
+  .step h3{ margin:2px 0 6px 0; font-size:16px; font-weight:600; }
+  .step p{ margin:0; font-size:14.5px; line-height:1.6; color:var(--text-muted); }
+
+  .why p{ font-size:15.5px; line-height:1.75; color:var(--text-muted); margin:0 0 16px 0; max-width:60ch; }
+  .why strong{ color:var(--text); font-weight:600; }
+
+  .closing{ text-align:center; padding:56px 0 72px; }
+  .closing h2{ margin:0 0 14px 0; }
+  .closing p{ color:var(--text-muted); font-size:15px; margin:0 0 32px 0; }
+
+  footer{
+    border-top:1px solid var(--border);
+    padding:28px 0 40px;
+    font-size:12.5px; color:var(--text-muted);
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;
+  }
+
+  @media (max-width:560px){
+    h1{ font-size:32px; }
+    .hero{ padding:48px 0 40px; }
+    .cta{ width:100%; justify-content:center; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <svg class="logo" viewBox="0 0 369 112" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Nova">
+      <g clip-path="url(#clip0)">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M195.098 55.9614C195.098 38.5557 206.473 26.3186 222.863 26.3186C239.242 26.3186 250.706 38.5557 250.706 55.9614C250.706 73.3672 239.175 85.5932 222.786 85.5932C206.396 85.5932 195.098 73.3672 195.098 55.9614ZM205.612 55.9614C205.612 68.2206 212.349 75.9516 222.863 75.9516C233.366 75.9516 240.114 68.2316 240.114 55.9614C240.114 43.6912 233.377 35.9603 222.863 35.9603C212.349 35.9603 205.612 43.7023 205.612 55.9614ZM139.191 27.3346L166.084 67.9554V27.3346H175.968V84.6544H166.084L139.114 44.0446V84.6544H129.229V27.3346H139.191ZM291.868 60.3459C290.763 63.2506 289.593 66.7847 288.179 71.7988C286.92 67.1713 285.826 63.8028 284.567 60.3459L272.021 27.3346H261.363L282.999 84.6544H293.348L314.685 27.3346H304.248L291.868 60.3459ZM337.955 27.3346H348.237L368.934 84.6544H358.342L353.715 71.4013H332.311L327.684 84.6544H317.258L337.955 27.3346ZM341.809 44.4422L335.304 62.9524H350.866L344.239 44.4422C343.742 43 343.351 41.5235 343.068 40.0245C342.737 41.5208 342.317 42.996 341.809 44.4422Z" fill="white"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M77.1001 43.1279C50.9362 47.5456 27.7543 63.0076 12.977 85.0961C7.32076 93.2795 2.94484 102.277 0 111.779C17.5714 35.9381 50.3729 0 50.3729 0C50.3729 0 63.2064 14.0594 77.1001 43.1279ZM80.8441 52.7587L81.4626 52.6814C89.6966 71.823 96.1587 91.679 100.768 112C100.768 112 79.3421 90.486 54.0065 85.262C51.6085 84.7762 49.1374 84.7762 46.7394 85.262C21.8787 90.3866 0.795188 111.172 0 111.967C8.92534 94.6077 21.9701 79.701 37.9923 68.552C45.8549 63.227 54.4688 59.1062 63.5488 56.326C68.0653 54.969 72.6708 53.9283 77.332 53.2115C77.6848 53.1649 78.0366 53.1153 78.3883 53.0658C79.2036 52.9508 80.0185 52.8359 80.8441 52.7587Z" fill="#0EB0A4"/>
+      </g>
+      <defs><clipPath id="clip0"><rect width="368.945" height="112" fill="white"/></clipPath></defs>
+    </svg>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <section class="hero">
+      <div class="eyebrow"><span class="dot"></span> Curated Matching</div>
+      <h1>Your next valuable connection could be <em>closer than you think.</em></h1>
+      <p class="lede">Nova is a community of thousands of professionals — but finding the right person to talk to shouldn't feel like searching a haystack. Tell us who you'd like to meet, and we'll do the searching for you.</p>
+      <a class="cta" href="https://novatalent.typeform.com/to/J51Xxb3F" target="_blank" rel="noopener">Find your match →</a>
+      <p class="cta-note">Takes about 3 minutes. No spam, no pressure — you decide if you want to connect.</p>
+    </section>
+
+    <section class="block">
+      <p class="kicker">How it works</p>
+      <h2>Three steps, no guesswork.</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="num">1</div>
+          <div>
+            <h3>Tell us who you'd like to meet</h3>
+            <p>A few questions about your own background, and about the kind of person and conversation you're looking for.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num">2</div>
+          <div>
+            <h3>We find someone relevant</h3>
+            <p>We look across the Nova community for people who actually match what you're after — not just a keyword, a genuinely relevant fit.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num">3</div>
+          <div>
+            <h3>We make the introduction</h3>
+            <p>If it looks like a good match, we reach out personally to both of you. The connection only happens if you're both interested.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block why">
+      <p class="kicker">Why we're doing this</p>
+      <h2>We tried this before. It worked.</h2>
+      <p>In 2024, Nova ran a version of this by hand: members told us who they wanted to meet, and the team searched for a match and made the introduction personally. It worked — <strong>almost everyone who was introduced actually connected</strong> — because it wasn't random, and it wasn't automated spam.</p>
+      <p>We're bringing that back, this time helping more people at once — but keeping the part that made it work: <strong>a real, curated match</strong>, and an introduction made with care.</p>
+    </section>
+
+    <section class="closing">
+      <h2>Ready to find yours?</h2>
+      <p>It only takes a few minutes to tell us who you're looking for.</p>
+      <a class="cta" href="https://novatalent.typeform.com/to/J51Xxb3F" target="_blank" rel="noopener">Find your match →</a>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; width:100%;">
+    <span>Nova Talent · Curated Matching</span>
+    <span>Community Engagement</span>
+  </div>
+</footer>
+
+</body>
+</html>
