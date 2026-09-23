@@ -341,7 +341,7 @@
       choices: ["Global / Multinational","International (mid-size)","Large / mid-size local","Small local","No preference"] },
     b_pais: { title: "What country should this person work in?", type: "short_text", required: true },
     b_empresa_concreta: { title: "Is there a specific company you'd like this person to work at?", desc: "Optional — no pressure if not, we'll still find a great match either way.", type: "short_text", required: false },
-    b_vertical: { title: "What vertical should this person work in?", type: "choice", required: true,
+    b_vertical: { title: "What vertical should this person work in?", desc: "Not sure between two? Select as many as would work — this isn't an either/or.", type: "choice", multi: true, required: true,
       choices: ["CEO / Entrepreneurship","Data Science","Engineering","Finance & Accounting","Human Resources","Investment (PE/VC)","Legal","Life Sciences / Healthcare","Marketing","Operations","Product","Sales & Business Development","Software Development","Strategy","Other","No preference"] },
     b_departamento: { title: "What department should this person work in?", type: "dropdown", required: true,
       choices: ["Accounting","Business Development","Commercial","Communications","Consulting","Customer service","Data management","Engineering","Executive Management (CE)","Finance","Human Resources (HR)","Information Technology (IT)","Legal","Marketing","Mergers and Acquisitions (M&A)","Operations","Product","Research & Development (R&D)","Sales","Strategy","Supply Chain","Other","No preference"] },
@@ -487,6 +487,33 @@
         select.appendChild(opt);
       });
       fieldBody.appendChild(select);
+    } else if (field.type === "choice" && field.multi){
+      var mlist = document.createElement("div");
+      mlist.className = "choice-list";
+      mlist.id = "input_" + ref;
+      var selectedArr = Array.isArray(existing) ? existing.slice() : [];
+      field.choices.forEach(function(c){
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "choice-btn" + (selectedArr.indexOf(c) !== -1 ? " selected" : "");
+        btn.textContent = c;
+        btn.addEventListener("click", function(){
+          var isNoPref = c === "No preference";
+          if (isNoPref){
+            selectedArr = selectedArr.indexOf(c) !== -1 ? [] : [c];
+          } else {
+            selectedArr = selectedArr.filter(function(v){ return v !== "No preference"; });
+            var i = selectedArr.indexOf(c);
+            if (i !== -1) selectedArr.splice(i, 1); else selectedArr.push(c);
+          }
+          answers[ref] = selectedArr;
+          Array.prototype.forEach.call(mlist.children, function(el){
+            el.classList.toggle("selected", selectedArr.indexOf(el.textContent) !== -1);
+          });
+        });
+        mlist.appendChild(btn);
+      });
+      fieldBody.appendChild(mlist);
     } else if (field.type === "choice"){
       var list = document.createElement("div");
       list.className = "choice-list";
@@ -523,6 +550,7 @@
 
   function readCurrentValue(ref){
     var field = FIELDS[ref];
+    if (field.type === "choice" && field.multi) return answers[ref] || [];
     if (field.type === "choice") return answers[ref] || "";
     var el = document.getElementById("input_" + ref);
     if (field.type === "legal") return el.checked;
@@ -534,8 +562,9 @@
     var ref = currentRef();
     var field = FIELDS[ref];
     var value = readCurrentValue(ref);
+    var isEmpty = Array.isArray(value) ? value.length === 0 : !value;
 
-    if (field.required && !value){
+    if (field.required && isEmpty){
       fieldTitle.style.color = "var(--danger)";
       setTimeout(function(){ fieldTitle.style.color = ""; }, 700);
       return;
