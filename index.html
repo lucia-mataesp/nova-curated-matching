@@ -13,11 +13,13 @@
   :root{
     --bg:#0B1210;
     --surface:#121C19;
+    --surface-2:#182420;
     --text:#F3F7F6;
     --text-muted:#9FB0AC;
     --accent:#0EB0A4;
     --accent-bright:#2BD6C7;
     --border:#22322D;
+    --danger:#E3A957;
   }
   *{ box-sizing:border-box; }
   html{ scroll-behavior:smooth; }
@@ -30,6 +32,7 @@
   }
   .wrap{ max-width:720px; margin:0 auto; padding:0 24px; }
   a{ color:inherit; }
+  [hidden]{ display:none !important; }
 
   header{ padding:32px 0 0; }
   .logo{ height:26px; display:block; }
@@ -60,11 +63,12 @@
     background:var(--accent); color:#04211E;
     font-family:'Inter',sans-serif; font-weight:700; font-size:16px;
     padding:16px 26px; border-radius:12px;
-    text-decoration:none;
+    text-decoration:none; border:none; cursor:pointer;
     transition:background .15s ease, transform .1s ease;
   }
   .cta:hover{ background:var(--accent-bright); }
   .cta:active{ transform:scale(0.98); }
+  .cta:disabled{ opacity:0.5; cursor:not-allowed; }
   .cta-note{ margin:14px 0 0 0; font-size:13px; color:var(--text-muted); }
 
   section.block{ padding:48px 0; border-top:1px solid var(--border); }
@@ -107,10 +111,71 @@
     display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;
   }
 
+  /* ---- Form wizard ---- */
+  #formView{ padding:40px 0 72px; }
+  .progress-track{
+    height:4px; background:var(--border); border-radius:2px; overflow:hidden; margin-bottom:36px;
+  }
+  .progress-fill{ height:100%; background:var(--accent-bright); transition:width .25s ease; width:0%; }
+  .field-kicker{ font-size:12px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--accent-bright); margin:0 0 14px 0; }
+  .field-title{ font-family:'Fraunces',Georgia,serif; font-weight:500; font-size:26px; line-height:1.3; margin:0 0 8px 0; text-wrap:balance; }
+  .field-desc{ font-size:14px; color:var(--text-muted); margin:0 0 26px 0; }
+  .field-input{
+    width:100%; background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    color:var(--text); font-family:'Inter',sans-serif; font-size:16px; padding:14px 16px;
+  }
+  .field-input:focus{ outline:none; border-color:var(--accent); }
+  textarea.field-input{ min-height:110px; resize:vertical; }
+  .choice-list{ display:flex; flex-direction:column; gap:10px; }
+  .choice-btn{
+    text-align:left; width:100%; background:var(--surface); border:1px solid var(--border);
+    color:var(--text); font-family:'Inter',sans-serif; font-size:15px; padding:14px 16px; border-radius:12px;
+    cursor:pointer; transition:border-color .12s ease, background .12s ease;
+  }
+  .choice-btn:hover{ border-color:var(--accent); }
+  .choice-btn.selected{ border-color:var(--accent-bright); background:rgba(43,214,199,0.1); }
+  .legal-row{ display:flex; align-items:flex-start; gap:12px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; }
+  .legal-row input{ margin-top:3px; width:18px; height:18px; accent-color:var(--accent); flex:none; }
+  .legal-row label{ font-size:14px; line-height:1.55; color:var(--text-muted); }
+  .form-actions{ display:flex; align-items:center; gap:14px; margin-top:30px; }
+  .btn-back{
+    background:none; border:none; color:var(--text-muted); font-family:'Inter',sans-serif; font-size:14px;
+    cursor:pointer; text-decoration:underline; text-underline-offset:3px;
+  }
+  .btn-back:hover{ color:var(--text); }
+
+  /* ---- Results ---- */
+  #resultsView{ padding:40px 0 72px; }
+  .preview-banner{
+    display:flex; align-items:flex-start; gap:10px;
+    background:rgba(227,169,87,0.12); border:1px solid rgba(227,169,87,0.35);
+    color:#F0C888; border-radius:12px; padding:14px 16px; font-size:13.5px; line-height:1.55; margin-bottom:32px;
+  }
+  .match-cards{ display:flex; flex-direction:column; gap:16px; }
+  .match-card{
+    display:flex; gap:16px; align-items:flex-start;
+    background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:20px;
+  }
+  .avatar{
+    flex:none; width:52px; height:52px; border-radius:50%;
+    background:var(--surface-2); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces',Georgia,serif; font-size:18px; color:var(--accent-bright); font-weight:500;
+  }
+  .match-name{ font-weight:600; font-size:16px; margin:0 0 4px 0; }
+  .match-reason{ font-size:14px; line-height:1.55; color:var(--text-muted); margin:0 0 14px 0; }
+  .connect-btn{
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--accent); color:#04211E; font-weight:700; font-size:13.5px;
+    padding:9px 14px; border-radius:9px; text-decoration:none;
+  }
+  .connect-btn.pending{ background:var(--surface-2); color:var(--text-muted); cursor:default; border:1px dashed var(--border); }
+
   @media (max-width:560px){
     h1{ font-size:32px; }
     .hero{ padding:48px 0 40px; }
     .cta{ width:100%; justify-content:center; }
+    .match-card{ flex-direction:column; align-items:flex-start; }
   }
 </style>
 </head>
@@ -130,54 +195,84 @@
 
 <main>
   <div class="wrap">
-    <section class="hero">
-      <div class="eyebrow"><span class="dot"></span> Curated Matching</div>
-      <h1>Your next valuable connection could be <em>closer than you think.</em></h1>
-      <p class="lede">Nova is a community of thousands of professionals — but finding the right person to talk to shouldn't feel like searching a haystack. Tell us who you'd like to meet, and we'll do the searching for you.</p>
-      <a class="cta" href="https://novatalent.typeform.com/to/J51Xxb3F" target="_blank" rel="noopener">Find your match →</a>
-      <p class="cta-note">Takes about 3 minutes. No spam, no pressure — you decide if you want to connect.</p>
-    </section>
 
-    <section class="block">
-      <p class="kicker">How it works</p>
-      <h2>Three steps, no guesswork.</h2>
-      <div class="steps">
-        <div class="step">
-          <div class="num">1</div>
-          <div>
-            <h3>Tell us who you'd like to meet</h3>
-            <p>A few questions about your own background, and about the kind of person and conversation you're looking for.</p>
+    <!-- ===== PITCH VIEW ===== -->
+    <div id="pitchView">
+      <section class="hero">
+        <div class="eyebrow"><span class="dot"></span> Curated Matching</div>
+        <h1>Your next valuable connection could be <em>closer than you think.</em></h1>
+        <p class="lede">Nova is a community of thousands of professionals — but finding the right person to talk to shouldn't feel like searching a haystack. Tell us who you'd like to meet, and we'll do the searching for you.</p>
+        <button class="cta" id="startBtn">Find your match →</button>
+        <p class="cta-note">Takes about 3 minutes. No spam, no pressure — you decide if you want to connect.</p>
+      </section>
+
+      <section class="block">
+        <p class="kicker">How it works</p>
+        <h2>Three steps, no guesswork.</h2>
+        <div class="steps">
+          <div class="step">
+            <div class="num">1</div>
+            <div>
+              <h3>Tell us who you'd like to meet</h3>
+              <p>A few questions about your own background, and about the kind of person and conversation you're looking for.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="num">2</div>
+            <div>
+              <h3>We find someone relevant</h3>
+              <p>We look across the Nova community for people who actually match what you're after — not just a keyword, a genuinely relevant fit.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="num">3</div>
+            <div>
+              <h3>You reach out, on your terms</h3>
+              <p>We show you 1-3 people worth meeting and why. If one looks right, you send the connection request yourself, directly on their Nova profile.</p>
+            </div>
           </div>
         </div>
-        <div class="step">
-          <div class="num">2</div>
-          <div>
-            <h3>We find someone relevant</h3>
-            <p>We look across the Nova community for people who actually match what you're after — not just a keyword, a genuinely relevant fit.</p>
-          </div>
+      </section>
+
+      <section class="block why">
+        <p class="kicker">Why we're doing this</p>
+        <h2>We tried this before. It worked.</h2>
+        <p>In 2024, Nova ran a version of this by hand: members told us who they wanted to meet, and the team searched for a match and made the introduction personally. It worked — <strong>almost everyone who was introduced actually connected</strong> — because it wasn't random, and it wasn't automated spam.</p>
+        <p>We're bringing that back, this time helping more people at once — but keeping the part that made it work: <strong>a real, curated match</strong>, not a directory search.</p>
+      </section>
+
+      <section class="closing">
+        <h2>Ready to find yours?</h2>
+        <p>It only takes a few minutes to tell us who you're looking for.</p>
+        <button class="cta" id="startBtn2">Find your match →</button>
+      </section>
+    </div>
+
+    <!-- ===== FORM VIEW ===== -->
+    <div id="formView" hidden>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <form id="stepForm">
+        <p class="field-kicker" id="fieldKicker"></p>
+        <h2 class="field-title" id="fieldTitle"></h2>
+        <p class="field-desc" id="fieldDesc" hidden></p>
+        <div id="fieldBody"></div>
+        <div class="form-actions">
+          <button type="submit" class="cta" id="continueBtn">Continue →</button>
+          <button type="button" class="btn-back" id="backBtn">← Back</button>
         </div>
-        <div class="step">
-          <div class="num">3</div>
-          <div>
-            <h3>We make the introduction</h3>
-            <p>If it looks like a good match, we reach out personally to both of you. The connection only happens if you're both interested.</p>
-          </div>
-        </div>
+      </form>
+    </div>
+
+    <!-- ===== RESULTS VIEW ===== -->
+    <div id="resultsView" hidden>
+      <div class="preview-banner">
+        ⚠️ <span><strong>Example preview, not a real match.</strong> The live matching engine isn't connected yet — these are placeholder profiles so we can review the layout together. The "Connect" link destination is also still pending (needs the real Nova Connect profile URL pattern).</span>
       </div>
-    </section>
+      <p class="kicker">Your suggestions</p>
+      <h2>People worth meeting</h2>
+      <div class="match-cards" id="matchCards"></div>
+    </div>
 
-    <section class="block why">
-      <p class="kicker">Why we're doing this</p>
-      <h2>We tried this before. It worked.</h2>
-      <p>In 2024, Nova ran a version of this by hand: members told us who they wanted to meet, and the team searched for a match and made the introduction personally. It worked — <strong>almost everyone who was introduced actually connected</strong> — because it wasn't random, and it wasn't automated spam.</p>
-      <p>We're bringing that back, this time helping more people at once — but keeping the part that made it work: <strong>a real, curated match</strong>, and an introduction made with care.</p>
-    </section>
-
-    <section class="closing">
-      <h2>Ready to find yours?</h2>
-      <p>It only takes a few minutes to tell us who you're looking for.</p>
-      <a class="cta" href="https://novatalent.typeform.com/to/J51Xxb3F" target="_blank" rel="noopener">Find your match →</a>
-    </section>
   </div>
 </main>
 
@@ -187,6 +282,306 @@
     <span>Community Engagement</span>
   </div>
 </footer>
+
+<script>
+(function(){
+  // ---- Field definitions (mirrors the live Typeform, form J51Xxb3F, 1:1) ----
+  var FIELDS = {
+    a_nombre: { title: "What's your name?", type: "short_text", required: true },
+    a_email: { title: "What's your email address associated with your Nova account?", type: "email", required: true },
+    a_tipo_org: { title: "What type of organization do you work at?", type: "choice", required: true,
+      choices: ["Company / Corporation","Law firm","Consulting firm","Bank / Financial institution","Investment fund (PE/VC)","Startup / Scaleup","Public sector / Academia / NGO","Freelance / Own business"] },
+    a_alcance: { title: "What is the scope of your organization?", type: "choice", required: true,
+      choices: ["Global / Multinational","International (mid-size)","Large / mid-size local","Small local"] },
+    a_departamento: { title: "What department do you work in?", type: "dropdown", required: true,
+      choices: ["Accounting","Business Development","Commercial","Communications","Consulting","Customer service","Data management","Engineering","Executive Management (CE)","Finance","Human Resources (HR)","Information Technology (IT)","Legal","Marketing","Mergers and Acquisitions (M&A)","Operations","Product","Research & Development (R&D)","Sales","Strategy","Supply Chain","Other"] },
+    a_pais: { title: "What country do you work in?", type: "short_text", required: true },
+    a_ciudad: { title: "What city?", type: "short_text", required: true },
+    a_seniority: { title: "What's your seniority level?", type: "choice", required: true,
+      choices: ["Intern","Employee / Analyst","Manager / Team Lead","Senior Manager / Director","C-Level / Executive","Founder / Owner"] },
+    a_vertical: { title: "What's your professional vertical?", type: "choice", required: true,
+      choices: ["CEO / Entrepreneurship","Data Science","Engineering","Finance & Accounting","Human Resources","Investment (PE/VC)","Legal","Life Sciences / Healthcare","Marketing","Operations","Product","Sales & Business Development","Software Development","Strategy","Other"] },
+
+    a_rol_ceo: { title: "Within CEO / Entrepreneurship, which best describes your role?", type: "choice", required: true,
+      choices: ["Advisor","Board Member","CEO - Chief Executive Officer","Chairman","Founder","Non-executive Director"] },
+    a_rol_datascience: { title: "Within Data Science, which best describes your role?", type: "dropdown", required: true,
+      choices: ["Analytics Intern","Artificial Intelligence Engineer","BI Analyst","BI Intern","BI Manager","CDO - Chief Data Officer","Data Analyst","Data Engineer","Data Science Intern","Data Scientist","Head of Data"] },
+    a_rol_engineers: { title: "Within Engineering, which best describes your role?", type: "dropdown", required: true,
+      choices: ["Aerospace Engineer","Assistant Engineer","Automation Engineer","Biological Engineer","Chemical Engineer","Civil Engineer","Electrical Engineer","Engineer","Engineering Director","Engineering Intern","Engineering Manager","Engineering Technician","Geological Engineer","Maintenance Engineer","Mechanical Engineer","Mining Engineer","Nuclear Engineer","Petroleum Engineer","Plant Engineer","Plant / Production Manager","Production Engineer","Quality Engineer","Safety Engineer","Sales Engineer"] },
+    a_rol_finance: { title: "Within Finance & Accounting, which best describes your role?", type: "dropdown", required: true,
+      choices: ["Accountant","Accounting Intern","Accounting Manager","Actuary","Assistant Branch Manager","Audit Director","Auditing Manager","Audit Intern","Audit Manager","Auditor","Audit Partner","Banking Analyst","Banking Intern","Banking Manager","Branch Manager","Buyer","Category Manager","CFO - Chief Financial Officer","Chief Lending Officer","Claims Representative","Claims Resolution Specialist","Controller","Economist","Finance Director","Finance Intern","Finance Manager","Financial Analyst","Financial Planner","Head of Finance","Head of Procurement","Insurance Analyst","Investor Relations Manager","Junior Auditor","Loan Officer","Procurement Analyst","Procurement Manager","Procurement Specialist","Property Manager","Real Estate Broker","Real Estate Intern","Risk Analyst","Risk Director","Risk & Insurance Intern","Risk Manager","Senior Auditor","Supplier Development Manager","Teller","Underwritter","Underwritter Manager","VP of Procurement"] },
+    a_rol_hr: { title: "Within Human Resources, which best describes your role?", type: "dropdown", required: true,
+      choices: ["CHRO - Chief Human Resources Officer","Coach","Compensation & Benefits Specialist","Employer Branding Specialist","Headhunter","Head of HR","HR Business Partner","HR Consultant","HR Intern","HR Manager","HR Specialist","Learning & Development Specialist","Recruiting Specialist","Search Consultant","VP of Human Resources"] },
+    a_rol_investments: { title: "Within Investment (PE/VC), which best describes your role?", type: "dropdown", required: true,
+      choices: ["Asset Management Intern","Financial Advisor","Investment Banking Analyst","Investment Banking Associate","Investment Banking Intern","Investment Banking Managing Director","Investment Banking Vice President","Portfolio Manager","Private Banker","Private Banking Intern","Private Equity Analyst","Private Equity Associate","Private Equity Director","Private Equity Partner","Private Equity Vice President","Procurement Intern","Relationship Manager","Research Analyst","Venture Capital Analyst","Venture Capital Associate","Venture Capital Intern","Venture Capital Partner","Venture Capital Principal"] },
+    a_rol_legal: { title: "Within Legal, which best describes your role?", type: "dropdown", required: true,
+      choices: ["Competition and EU Lawyer","Compliance Analyst","Compliance Manager","Corporate Lawyer","Digital, IP & Intern Lawyer","Finance, Banking & Insurance Lawyer","Intern Lawyer","Labor Lawyer","Lawyer","Legal Assistant / Paralegal","Litigation Lawyer","Other Lawyer","Real Estate Lawyer","Tax Lawyer"] },
+    a_rol_lifesciences: { title: "Tell us your specific role within Life Sciences / Healthcare (e.g. Regulatory Affairs, Market Access, Pharma R&D, Healthtech...)", type: "short_text", required: true },
+    a_rol_marketing: { title: "Within Marketing, which best describes your role?", type: "dropdown", required: true,
+      choices: ["Brand Manager","Brand Strategist","CGO - Chief of Growth","CMO - Chief Marketing Officer","Communications Intern","Communications Manager","Communications Specialist","Community Manager","Content Creator","Content Marketing Manager","Copywriter","Digital Marketing Analyst","Digital Marketing Manager","eCommerce Marketing Specialist","Editor","Growth Analyst","Growth Intern","Growth Manager","Growth Marketing Manager","Head of Growth","Journalist","Marketing Automation Specialist","Marketing Communications Manager","Marketing Director","Marketing Intern","Marketing Manager","Marketing Product Manager","Marketing Research Analyst","Marketing Specialist","Producer","Public Relations","SEO Manager","Social Media Assistant","Social Media Manager","Video Editor","VP of Growth","VP of Marketing"] },
+    a_rol_operations: { title: "Within Operations, which best describes your role?", type: "dropdown", required: true,
+      choices: ["COO - Chief Operating Officer","Delivery Analyst","Delivery Intern","Delivery Manager","Demand Planner","Head of Delivery","Head of Operations","Logistics Manager","Maintenance Manager","Operations Analyst","Operations Assistant","Operations Coordinator","Operations Intern","Operations Manager","PMO - Project Management Officer","Production Manager","Production Planner","Production Specialist","Project Manager","Quality Manager","Quality Specialist","Supply Chain Intern","Supply Chain Manager","Supply Chain Planner","Supply Chain Specialist","Transportation Manager","VP of Operations","Warehouse Associate","Warehouse Manager"] },
+    a_rol_product: { title: "Within Product, which best describes your role?", type: "dropdown", required: true,
+      choices: ["Associate Product Manager","CPO - Chief Product Officer","Design Intern","Digital Analyst","Digital Manager","Digital Transformation Analyst","Digital Transformation Manager","Graphic Designer","Head of Product","Innovation Analyst","Innovation & Digital Intern","Innovation Manager","Product Designer","Product Management Intern","Product Manager","Product Owner","UI Designer","UX and UI Designer","UX Designer","VP of Product","Web Designer"] },
+    a_rol_sales: { title: "Within Sales & Business Development, which best describes your role?", type: "dropdown", required: true,
+      choices: ["Account Executive","Account Manager","Area Sales Manager","Business Developer","Business Development Manager","CCO - Chief Customer Officer","CRO - Chief Revenue Officer","Customer Success Associate","Customer Success Intern","Customer Success Manager","Director of Customer Success","Head of Customer Success","Head of Revenue Operations","Head of Sales","Revenue Operations Analyst","Revenue Operations Manager","Sales Analyst","Sales Associate","Sales Development Representative","Sales Intern","Sales Manager","Store Employee","Store Intern","Store Manager","VP of Customer Success","VP of Revenue Operations","VP of Sales"] },
+    a_rol_software: { title: "Within Software Development, which best describes your role?", type: "dropdown", required: true,
+      choices: ["Application (iOS / Android) Engineer","Backend Engineer","CIO - Chief Information Officer","CISO - Chief Information Security Officer","Cloud Architect","CTO - Chief Technology Officer","DevOps Engineer","Forward Deployed Engineer","Frontend Engineer","Fullstack Engineer","Head of Engineering","Information Security Analyst","IT Analyst","IT Intern","IT Manager","Security Engineer","Site Reliability Engineer","Software Engineer","Software Engineering Intern","Solutions Architect","Tech Lead","VP of Engineering"] },
+    a_rol_strategy: { title: "Within Strategy, which best describes your role?", type: "dropdown", required: true,
+      choices: ["Area Manager","Associate Consultant","Business Analyst","Business Unit Director","Business Unit Manager","Chief of Staff","Consultant","Consulting Analyst","Consulting Engagement Manager","Consulting Intern","Consulting Partner","Consulting Principal","Head of Strategy","Management Intern","Manager","Strategy Analyst","Strategy Intern","Strategy Manager","VP of Strategy"] },
+    a_rol_otro: { title: "Within Other, which best describes your role?", type: "dropdown", required: true,
+      choices: ["Academical Researcher","Adjunct Faculty / Professor","Administration Manager","Administrative Coordinator","Administrative Intern","Administrative Specialist","Administrator","Architect","Art Director","Artist","Assistant","Biostatistician","Clerk","Creative Director","Head of R & D","Instructor / Teaching Assistant","Interior Designer","Medical Researcher","Officer","PhD Researcher","Photographer","Postdoc Researcher","Public Servant","R & D Analyst","R & D Intern","R & D Manager","Research Assistant","Researcher","Scientist","Secretary","Statistician","Other / not on the list"] },
+
+    b_tipo_org: { title: "What type of organization would you like them to work at?", type: "choice", required: true,
+      choices: ["Company / Corporation","Law firm","Consulting firm","Bank / Financial institution","Investment fund (PE/VC)","Startup / Scaleup","Public sector / Academia / NGO","Freelance / Own business","No preference"] },
+    b_alcance: { title: "What scope would you like their organization to have?", type: "choice", required: true,
+      choices: ["Global / Multinational","International (mid-size)","Large / mid-size local","Small local","No preference"] },
+    b_departamento: { title: "What department would you like them to work in?", type: "dropdown", required: true,
+      choices: ["Accounting","Business Development","Commercial","Communications","Consulting","Customer service","Data management","Engineering","Executive Management (CE)","Finance","Human Resources (HR)","Information Technology (IT)","Legal","Marketing","Mergers and Acquisitions (M&A)","Operations","Product","Research & Development (R&D)","Sales","Strategy","Supply Chain","Other","No preference"] },
+    b_vertical: { title: "What vertical would you like them to be in?", type: "choice", required: true,
+      choices: ["CEO / Entrepreneurship","Data Science","Engineering","Finance & Accounting","Human Resources","Investment (PE/VC)","Legal","Life Sciences / Healthcare","Marketing","Operations","Product","Sales & Business Development","Software Development","Strategy","Other","No preference"] },
+    b_empresa_concreta: { title: "Is there a specific company you'd like to connect with someone from?", desc: "Optional — no pressure if not, we'll still find a great match either way.", type: "short_text", required: false },
+    b_pais: { title: "What country would you like them to work in?", type: "short_text", required: true },
+    b_seniority: { title: "What's the minimum seniority level you're looking for?", type: "choice", required: true,
+      choices: ["Intern","Employee / Analyst","Manager / Team Lead","Senior Manager / Director","C-Level / Executive","Founder / Owner","No preference"] },
+    b_objetivo: { title: "What's your goal with this connection?", type: "choice", required: true,
+      choices: ["Expand my network","Looking for mentorship / advice","Explore job opportunities","Looking for a co-founder / partner","Business opportunity / client"] },
+    b_mentoria_area: { title: "Within mentorship, which specific area interests you most?", type: "choice", required: true,
+      choices: ["Grow in my current role (leadership, team management)","Change industry or type of role","Fundraising / raising capital","M&A / deals","MBA / master's degree decision","Consultative B2B sales","Scaling a startup (operational challenges, KPIs, team)"] },
+    b_socio_sector: { title: "Is there a more specific sector or niche within that industry?", desc: "Optional — e.g. football, sustainable fashion, cybersecurity...", type: "short_text", required: false },
+    b_texto_libre: { title: "In one sentence, what would you like to get out of this connection?", desc: "Mention the specific role or function if it matters to you (e.g. \"someone who went from managing campaigns to leading a team\").", type: "long_text", required: true },
+    consentimiento: { title: "One last thing", type: "legal", required: true,
+      label: "I agree that my profile may be shown to another Nova member as a suggested contact for this campaign." }
+  };
+
+  var VERTICAL_TO_ROLE = {
+    "CEO / Entrepreneurship": "a_rol_ceo",
+    "Data Science": "a_rol_datascience",
+    "Engineering": "a_rol_engineers",
+    "Finance & Accounting": "a_rol_finance",
+    "Human Resources": "a_rol_hr",
+    "Investment (PE/VC)": "a_rol_investments",
+    "Legal": "a_rol_legal",
+    "Life Sciences / Healthcare": "a_rol_lifesciences",
+    "Marketing": "a_rol_marketing",
+    "Operations": "a_rol_operations",
+    "Product": "a_rol_product",
+    "Sales & Business Development": "a_rol_sales",
+    "Software Development": "a_rol_software",
+    "Strategy": "a_rol_strategy",
+    "Other": "a_rol_otro"
+  };
+
+  var SECTION_A_KICKER = "About you";
+  var SECTION_B_KICKER = "Who you'd like to meet";
+
+  function kickerFor(ref){
+    if (ref === "consentimiento") return "Almost done";
+    return ref.indexOf("b_") === 0 || ref === "b_texto_libre" ? SECTION_B_KICKER : SECTION_A_KICKER;
+  }
+
+  function nextRef(ref, answers){
+    switch(ref){
+      case "a_nombre": return "a_email";
+      case "a_email": return "a_tipo_org";
+      case "a_tipo_org": return "a_alcance";
+      case "a_alcance": return "a_departamento";
+      case "a_departamento": return "a_pais";
+      case "a_pais": return "a_ciudad";
+      case "a_ciudad": return "a_seniority";
+      case "a_seniority": return "a_vertical";
+      case "a_vertical": return VERTICAL_TO_ROLE[answers.a_vertical] || "b_tipo_org";
+      case "b_tipo_org": return "b_alcance";
+      case "b_alcance": return "b_departamento";
+      case "b_departamento": return "b_vertical";
+      case "b_vertical": return "b_empresa_concreta";
+      case "b_empresa_concreta": return "b_pais";
+      case "b_pais": return "b_seniority";
+      case "b_seniority": return "b_objetivo";
+      case "b_objetivo":
+        if (answers.b_objetivo === "Looking for mentorship / advice") return "b_mentoria_area";
+        if (answers.b_objetivo === "Looking for a co-founder / partner") return "b_socio_sector";
+        return "b_texto_libre";
+      case "b_mentoria_area": return "b_texto_libre";
+      case "b_socio_sector": return "b_texto_libre";
+      case "b_texto_libre": return "consentimiento";
+      default:
+        if (ref.indexOf("a_rol_") === 0) return "b_tipo_org";
+        return null;
+    }
+  }
+
+  var TOTAL_STEPS_ESTIMATE = 20;
+  var history = ["a_nombre"];
+  var answers = {};
+
+  var pitchView = document.getElementById("pitchView");
+  var formView = document.getElementById("formView");
+  var resultsView = document.getElementById("resultsView");
+  var fieldKicker = document.getElementById("fieldKicker");
+  var fieldTitle = document.getElementById("fieldTitle");
+  var fieldDesc = document.getElementById("fieldDesc");
+  var fieldBody = document.getElementById("fieldBody");
+  var continueBtn = document.getElementById("continueBtn");
+  var backBtn = document.getElementById("backBtn");
+  var progressFill = document.getElementById("progressFill");
+  var stepForm = document.getElementById("stepForm");
+
+  function startForm(){
+    pitchView.hidden = true;
+    formView.hidden = false;
+    history = ["a_nombre"];
+    answers = {};
+    render();
+    window.scrollTo({top:0, behavior:"instant"});
+  }
+  document.getElementById("startBtn").addEventListener("click", startForm);
+  document.getElementById("startBtn2").addEventListener("click", startForm);
+
+  function currentRef(){ return history[history.length - 1]; }
+
+  function render(){
+    var ref = currentRef();
+    var field = FIELDS[ref];
+    fieldKicker.textContent = kickerFor(ref);
+    fieldTitle.textContent = field.title;
+    if (field.desc){ fieldDesc.hidden = false; fieldDesc.textContent = field.desc; }
+    else { fieldDesc.hidden = true; }
+    backBtn.style.visibility = history.length > 1 ? "visible" : "hidden";
+    progressFill.style.width = Math.min(100, Math.round(history.length / TOTAL_STEPS_ESTIMATE * 100)) + "%";
+
+    fieldBody.innerHTML = "";
+    var existing = answers[ref];
+
+    if (field.type === "short_text" || field.type === "email"){
+      var input = document.createElement("input");
+      input.type = field.type === "email" ? "email" : "text";
+      input.className = "field-input";
+      input.id = "input_" + ref;
+      input.value = existing || "";
+      input.placeholder = "Type your answer here...";
+      fieldBody.appendChild(input);
+      setTimeout(function(){ input.focus(); }, 50);
+    } else if (field.type === "long_text"){
+      var ta = document.createElement("textarea");
+      ta.className = "field-input";
+      ta.id = "input_" + ref;
+      ta.value = existing || "";
+      ta.placeholder = "Type your answer here...";
+      fieldBody.appendChild(ta);
+      setTimeout(function(){ ta.focus(); }, 50);
+    } else if (field.type === "dropdown"){
+      var select = document.createElement("select");
+      select.className = "field-input";
+      select.id = "input_" + ref;
+      var blank = document.createElement("option");
+      blank.value = ""; blank.textContent = "Select one...";
+      select.appendChild(blank);
+      field.choices.forEach(function(c){
+        var opt = document.createElement("option");
+        opt.value = c; opt.textContent = c;
+        if (c === existing) opt.selected = true;
+        select.appendChild(opt);
+      });
+      fieldBody.appendChild(select);
+    } else if (field.type === "choice"){
+      var list = document.createElement("div");
+      list.className = "choice-list";
+      list.id = "input_" + ref;
+      field.choices.forEach(function(c){
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "choice-btn" + (c === existing ? " selected" : "");
+        btn.textContent = c;
+        btn.addEventListener("click", function(){
+          answers[ref] = c;
+          Array.prototype.forEach.call(list.children, function(el){ el.classList.remove("selected"); });
+          btn.classList.add("selected");
+        });
+        list.appendChild(btn);
+      });
+      fieldBody.appendChild(list);
+    } else if (field.type === "legal"){
+      var row = document.createElement("div");
+      row.className = "legal-row";
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.id = "input_" + ref;
+      cb.checked = !!existing;
+      var label = document.createElement("label");
+      label.setAttribute("for", "input_" + ref);
+      label.textContent = field.label;
+      row.appendChild(cb); row.appendChild(label);
+      fieldBody.appendChild(row);
+    }
+
+    continueBtn.textContent = ref === "consentimiento" ? "See my suggestions →" : "Continue →";
+  }
+
+  function readCurrentValue(ref){
+    var field = FIELDS[ref];
+    if (field.type === "choice") return answers[ref] || "";
+    var el = document.getElementById("input_" + ref);
+    if (field.type === "legal") return el.checked;
+    return el.value.trim();
+  }
+
+  stepForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    var ref = currentRef();
+    var field = FIELDS[ref];
+    var value = readCurrentValue(ref);
+
+    if (field.required && !value){
+      fieldTitle.style.color = "var(--danger)";
+      setTimeout(function(){ fieldTitle.style.color = ""; }, 700);
+      return;
+    }
+    answers[ref] = value;
+
+    var next = nextRef(ref, answers);
+    if (next === null){
+      showResults();
+      return;
+    }
+    history.push(next);
+    render();
+    window.scrollTo({top:0, behavior:"instant"});
+  });
+
+  backBtn.addEventListener("click", function(){
+    if (history.length <= 1) return;
+    history.pop();
+    render();
+  });
+
+  var EXAMPLE_MATCHES = [
+    { initials:"AR", name:"Alex Rivera (example)", reason:"Senior Product Manager at a mid-size fintech — went from data analyst to leading a full product team, matches what you described." },
+    { initials:"JL", name:"Jordan Lee (example)", reason:"Runs growth at an early-stage startup in the same vertical you're looking for — active in the community and open to new connections." },
+    { initials:"SO", name:"Sam Okafor (example)", reason:"C-level at a global organization matching your scope preference, with background directly relevant to your goal." }
+  ];
+
+  function showResults(){
+    formView.hidden = true;
+    resultsView.hidden = false;
+    var container = document.getElementById("matchCards");
+    container.innerHTML = "";
+    EXAMPLE_MATCHES.forEach(function(m){
+      var card = document.createElement("div");
+      card.className = "match-card";
+      card.innerHTML =
+        '<div class="avatar">' + m.initials + '</div>' +
+        '<div>' +
+          '<p class="match-name">' + m.name + '</p>' +
+          '<p class="match-reason">' + m.reason + '</p>' +
+          '<span class="connect-btn pending">Connect (link pending) →</span>' +
+        '</div>';
+      container.appendChild(card);
+    });
+    window.scrollTo({top:0, behavior:"instant"});
+  }
+})();
+</script>
 
 </body>
 </html>
