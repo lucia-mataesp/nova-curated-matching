@@ -170,6 +170,7 @@
     padding:9px 14px; border-radius:9px; text-decoration:none;
   }
   .connect-btn.pending{ background:var(--surface-2); color:var(--text-muted); cursor:default; border:1px dashed var(--border); }
+  .example-tag{ font-size:11px; color:var(--text-muted); margin-top:6px; }
 
   @media (max-width:560px){
     h1{ font-size:32px; }
@@ -266,7 +267,7 @@
     <!-- ===== RESULTS VIEW ===== -->
     <div id="resultsView" hidden>
       <div class="preview-banner">
-        ⚠️ <span><strong>Example preview, not a real match.</strong> The live matching engine isn't connected yet — these are placeholder profiles so we can review the layout together. The "Connect" link destination is also still pending (needs the real Nova Connect profile URL pattern).</span>
+        ⚠️ <span><strong>Example preview, not a real match.</strong> The live matching engine isn't connected yet — these are placeholder profiles so we can review the layout together. The "Connect" button already points to the real Nova Connect profile pattern (<code>app.novatalent.com/members/{public_id}</code>); it just needs a real match to link to.</span>
       </div>
       <p class="kicker">Your suggestions</p>
       <h2>People worth meeting</h2>
@@ -555,10 +556,14 @@
     render();
   });
 
+  // NOTE: public_id below is a made-up placeholder shaped like a real Nova Connect id,
+  // not a real member's id. Once real matches come from the backend, swap in each
+  // candidate's actual `public_id` (now present in pool_base_enriched.csv) here.
+  var NOVA_PROFILE_BASE = "https://app.novatalent.com/members/";
   var EXAMPLE_MATCHES = [
-    { initials:"AR", name:"Alex Rivera (example)", reason:"Senior Product Manager at a mid-size fintech — went from data analyst to leading a full product team, matches what you described." },
-    { initials:"JL", name:"Jordan Lee (example)", reason:"Runs growth at an early-stage startup in the same vertical you're looking for — active in the community and open to new connections." },
-    { initials:"SO", name:"Sam Okafor (example)", reason:"C-level at a global organization matching your scope preference, with background directly relevant to your goal." }
+    { initials:"AR", name:"Alex Rivera (example)", reason:"Senior Product Manager at a mid-size fintech — went from data analyst to leading a full product team, matches what you described.", public_id:"EXAMPLE00PLACEHOLDER0001" },
+    { initials:"JL", name:"Jordan Lee (example)", reason:"Runs growth at an early-stage startup in the same vertical you're looking for — active in the community and open to new connections.", public_id:"EXAMPLE00PLACEHOLDER0002" },
+    { initials:"SO", name:"Sam Okafor (example)", reason:"C-level at a global organization matching your scope preference, with background directly relevant to your goal.", public_id:"EXAMPLE00PLACEHOLDER0003" }
   ];
 
   function showResults(){
@@ -574,7 +579,8 @@
         '<div>' +
           '<p class="match-name">' + m.name + '</p>' +
           '<p class="match-reason">' + m.reason + '</p>' +
-          '<span class="connect-btn pending">Connect (link pending) →</span>' +
+          '<a class="connect-btn" href="' + NOVA_PROFILE_BASE + m.public_id + '" target="_blank" rel="noopener">Connect →</a>' +
+          '<p class="example-tag">Example profile — link goes to a placeholder id, not a real member.</p>' +
         '</div>';
       container.appendChild(card);
     });
