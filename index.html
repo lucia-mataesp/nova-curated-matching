@@ -8,18 +8,20 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%230EB0A4%22/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0B1210;
-    --surface:#121C19;
-    --surface-2:#182420;
-    --text:#F3F7F6;
-    --text-muted:#9FB0AC;
+    --bg:#090E12;
+    --surface:#131C24;
+    --surface-2:#1B2732;
+    --text:#FFFFFF;
+    --text-muted:rgba(255,255,255,0.7);
     --accent:#0EB0A4;
-    --accent-bright:#2BD6C7;
-    --border:#22322D;
+    --accent-bright:#0EB0A4;
+    --border:rgba(255,255,255,0.12);
     --danger:#E3A957;
+    --font-head:'DM Sans',system-ui,-apple-system,sans-serif;
+    --font-body:'Open Sans',system-ui,-apple-system,sans-serif;
   }
   *{ box-sizing:border-box; }
   html{ scroll-behavior:smooth; }
@@ -27,7 +29,7 @@
     margin:0;
     background:var(--bg);
     color:var(--text);
-    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    font-family:var(--font-body);
     -webkit-font-smoothing:antialiased;
   }
   .wrap{ max-width:720px; margin:0 auto; padding:0 24px; }
@@ -45,15 +47,15 @@
   }
   .eyebrow .dot{ width:6px; height:6px; border-radius:50%; background:var(--accent-bright); }
   h1{
-    font-family:'Fraunces',Georgia,serif;
-    font-weight:500;
-    font-size:44px;
-    line-height:1.12;
+    font-family:var(--font-head);
+    font-weight:700;
+    font-size:46px;
+    line-height:1.1;
     letter-spacing:-0.01em;
     margin:0 0 22px 0;
     text-wrap:balance;
   }
-  h1 em{ color:var(--accent-bright); font-style:normal; }
+  h1 em{ color:var(--accent); font-style:normal; }
   .lede{
     font-size:17px; line-height:1.65; color:var(--text-muted); margin:0 0 36px 0;
     max-width:56ch;
@@ -61,7 +63,7 @@
   .cta{
     display:inline-flex; align-items:center; gap:10px;
     background:var(--accent); color:#04211E;
-    font-family:'Inter',sans-serif; font-weight:700; font-size:16px;
+    font-family:var(--font-body); font-weight:700; font-size:16px;
     padding:16px 26px; border-radius:12px;
     text-decoration:none; border:none; cursor:pointer;
     transition:background .15s ease, transform .1s ease;
@@ -77,8 +79,8 @@
     color:var(--text-muted); margin:0 0 20px 0;
   }
   h2{
-    font-family:'Fraunces',Georgia,serif;
-    font-weight:500; font-size:26px; line-height:1.25;
+    font-family:var(--font-head);
+    font-weight:700; font-size:28px; line-height:1.22;
     margin:0 0 24px 0; text-wrap:balance;
   }
 
@@ -94,7 +96,7 @@
     display:flex; align-items:center; justify-content:center;
     font-weight:700; font-size:14px;
   }
-  .step h3{ margin:2px 0 6px 0; font-size:16px; font-weight:600; }
+  .step h3{ margin:2px 0 6px 0; font-family:var(--font-head); font-size:17px; font-weight:600; }
   .step p{ margin:0; font-size:14.5px; line-height:1.6; color:var(--text-muted); }
 
   .why p{ font-size:15.5px; line-height:1.75; color:var(--text-muted); margin:0 0 16px 0; max-width:60ch; }
@@ -117,29 +119,29 @@
     height:4px; background:var(--border); border-radius:2px; overflow:hidden; margin-bottom:36px;
   }
   .progress-fill{ height:100%; background:var(--accent-bright); transition:width .25s ease; width:0%; }
-  .field-kicker{ font-size:12px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--accent-bright); margin:0 0 14px 0; }
-  .field-title{ font-family:'Fraunces',Georgia,serif; font-weight:500; font-size:26px; line-height:1.3; margin:0 0 8px 0; text-wrap:balance; }
+  .field-kicker{ font-size:12px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--accent); margin:0 0 14px 0; font-family:var(--font-body); }
+  .field-title{ font-family:var(--font-head); font-weight:700; font-size:28px; line-height:1.28; margin:0 0 8px 0; text-wrap:balance; }
   .field-desc{ font-size:14px; color:var(--text-muted); margin:0 0 26px 0; }
   .field-input{
     width:100%; background:var(--surface); border:1px solid var(--border); border-radius:12px;
-    color:var(--text); font-family:'Inter',sans-serif; font-size:16px; padding:14px 16px;
+    color:var(--text); font-family:var(--font-body); font-size:16px; padding:14px 16px;
   }
   .field-input:focus{ outline:none; border-color:var(--accent); }
   textarea.field-input{ min-height:110px; resize:vertical; }
   .choice-list{ display:flex; flex-direction:column; gap:10px; }
   .choice-btn{
     text-align:left; width:100%; background:var(--surface); border:1px solid var(--border);
-    color:var(--text); font-family:'Inter',sans-serif; font-size:15px; padding:14px 16px; border-radius:12px;
+    color:var(--text); font-family:var(--font-body); font-size:15px; padding:14px 16px; border-radius:12px;
     cursor:pointer; transition:border-color .12s ease, background .12s ease;
   }
   .choice-btn:hover{ border-color:var(--accent); }
-  .choice-btn.selected{ border-color:var(--accent-bright); background:rgba(43,214,199,0.1); }
+  .choice-btn.selected{ border-color:var(--accent); background:rgba(14,176,164,0.14); }
   .legal-row{ display:flex; align-items:flex-start; gap:12px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; }
   .legal-row input{ margin-top:3px; width:18px; height:18px; accent-color:var(--accent); flex:none; }
   .legal-row label{ font-size:14px; line-height:1.55; color:var(--text-muted); }
   .form-actions{ display:flex; align-items:center; gap:14px; margin-top:30px; }
   .btn-back{
-    background:none; border:none; color:var(--text-muted); font-family:'Inter',sans-serif; font-size:14px;
+    background:none; border:none; color:var(--text-muted); font-family:var(--font-body); font-size:14px;
     cursor:pointer; text-decoration:underline; text-underline-offset:3px;
   }
   .btn-back:hover{ color:var(--text); }
@@ -160,7 +162,7 @@
     flex:none; width:52px; height:52px; border-radius:50%;
     background:var(--surface-2); border:1px solid var(--border);
     display:flex; align-items:center; justify-content:center;
-    font-family:'Fraunces',Georgia,serif; font-size:18px; color:var(--accent-bright); font-weight:500;
+    font-family:var(--font-head); font-size:16px; color:var(--accent); font-weight:700;
   }
   .match-name{ font-weight:600; font-size:16px; margin:0 0 4px 0; }
   .match-reason{ font-size:14px; line-height:1.55; color:var(--text-muted); margin:0 0 14px 0; }
@@ -294,14 +296,14 @@
       choices: ["Company / Corporation","Law firm","Consulting firm","Bank / Financial institution","Investment fund (PE/VC)","Startup / Scaleup","Public sector / Academia / NGO","Freelance / Own business"] },
     a_alcance: { title: "What is the scope of your organization?", type: "choice", required: true,
       choices: ["Global / Multinational","International (mid-size)","Large / mid-size local","Small local"] },
-    a_departamento: { title: "What department do you work in?", type: "dropdown", required: true,
-      choices: ["Accounting","Business Development","Commercial","Communications","Consulting","Customer service","Data management","Engineering","Executive Management (CE)","Finance","Human Resources (HR)","Information Technology (IT)","Legal","Marketing","Mergers and Acquisitions (M&A)","Operations","Product","Research & Development (R&D)","Sales","Strategy","Supply Chain","Other"] },
     a_pais: { title: "What country do you work in?", type: "short_text", required: true },
     a_ciudad: { title: "What city?", type: "short_text", required: true },
-    a_seniority: { title: "What's your seniority level?", type: "choice", required: true,
-      choices: ["Intern","Employee / Analyst","Manager / Team Lead","Senior Manager / Director","C-Level / Executive","Founder / Owner"] },
     a_vertical: { title: "What's your professional vertical?", type: "choice", required: true,
       choices: ["CEO / Entrepreneurship","Data Science","Engineering","Finance & Accounting","Human Resources","Investment (PE/VC)","Legal","Life Sciences / Healthcare","Marketing","Operations","Product","Sales & Business Development","Software Development","Strategy","Other"] },
+    a_departamento: { title: "What department do you work in?", type: "dropdown", required: true,
+      choices: ["Accounting","Business Development","Commercial","Communications","Consulting","Customer service","Data management","Engineering","Executive Management (CE)","Finance","Human Resources (HR)","Information Technology (IT)","Legal","Marketing","Mergers and Acquisitions (M&A)","Operations","Product","Research & Development (R&D)","Sales","Strategy","Supply Chain","Other"] },
+    a_seniority: { title: "What's your seniority level?", type: "choice", required: true,
+      choices: ["Intern","Employee / Analyst","Manager / Team Lead","Senior Manager / Director","C-Level / Executive","Founder / Owner"] },
 
     a_rol_ceo: { title: "Within CEO / Entrepreneurship, which best describes your role?", type: "choice", required: true,
       choices: ["Advisor","Board Member","CEO - Chief Executive Officer","Chairman","Founder","Non-executive Director"] },
@@ -333,17 +335,17 @@
     a_rol_otro: { title: "Within Other, which best describes your role?", type: "dropdown", required: true,
       choices: ["Academical Researcher","Adjunct Faculty / Professor","Administration Manager","Administrative Coordinator","Administrative Intern","Administrative Specialist","Administrator","Architect","Art Director","Artist","Assistant","Biostatistician","Clerk","Creative Director","Head of R & D","Instructor / Teaching Assistant","Interior Designer","Medical Researcher","Officer","PhD Researcher","Photographer","Postdoc Researcher","Public Servant","R & D Analyst","R & D Intern","R & D Manager","Research Assistant","Researcher","Scientist","Secretary","Statistician","Other / not on the list"] },
 
-    b_tipo_org: { title: "What type of organization would you like them to work at?", type: "choice", required: true,
+    b_tipo_org: { title: "What type of organization should this person work at?", desc: "From here on, we're asking about the profile of the person you'd like to meet — not you.", type: "choice", required: true,
       choices: ["Company / Corporation","Law firm","Consulting firm","Bank / Financial institution","Investment fund (PE/VC)","Startup / Scaleup","Public sector / Academia / NGO","Freelance / Own business","No preference"] },
-    b_alcance: { title: "What scope would you like their organization to have?", type: "choice", required: true,
+    b_alcance: { title: "What scope should this person's organization have?", type: "choice", required: true,
       choices: ["Global / Multinational","International (mid-size)","Large / mid-size local","Small local","No preference"] },
-    b_departamento: { title: "What department would you like them to work in?", type: "dropdown", required: true,
-      choices: ["Accounting","Business Development","Commercial","Communications","Consulting","Customer service","Data management","Engineering","Executive Management (CE)","Finance","Human Resources (HR)","Information Technology (IT)","Legal","Marketing","Mergers and Acquisitions (M&A)","Operations","Product","Research & Development (R&D)","Sales","Strategy","Supply Chain","Other","No preference"] },
-    b_vertical: { title: "What vertical would you like them to be in?", type: "choice", required: true,
+    b_pais: { title: "What country should this person work in?", type: "short_text", required: true },
+    b_empresa_concreta: { title: "Is there a specific company you'd like this person to work at?", desc: "Optional — no pressure if not, we'll still find a great match either way.", type: "short_text", required: false },
+    b_vertical: { title: "What vertical should this person work in?", type: "choice", required: true,
       choices: ["CEO / Entrepreneurship","Data Science","Engineering","Finance & Accounting","Human Resources","Investment (PE/VC)","Legal","Life Sciences / Healthcare","Marketing","Operations","Product","Sales & Business Development","Software Development","Strategy","Other","No preference"] },
-    b_empresa_concreta: { title: "Is there a specific company you'd like to connect with someone from?", desc: "Optional — no pressure if not, we'll still find a great match either way.", type: "short_text", required: false },
-    b_pais: { title: "What country would you like them to work in?", type: "short_text", required: true },
-    b_seniority: { title: "What's the minimum seniority level you're looking for?", type: "choice", required: true,
+    b_departamento: { title: "What department should this person work in?", type: "dropdown", required: true,
+      choices: ["Accounting","Business Development","Commercial","Communications","Consulting","Customer service","Data management","Engineering","Executive Management (CE)","Finance","Human Resources (HR)","Information Technology (IT)","Legal","Marketing","Mergers and Acquisitions (M&A)","Operations","Product","Research & Development (R&D)","Sales","Strategy","Supply Chain","Other","No preference"] },
+    b_seniority: { title: "What's the minimum seniority level this person should have?", type: "choice", required: true,
       choices: ["Intern","Employee / Analyst","Manager / Team Lead","Senior Manager / Director","C-Level / Executive","Founder / Owner","No preference"] },
     b_objetivo: { title: "What's your goal with this connection?", type: "choice", required: true,
       choices: ["Expand my network","Looking for mentorship / advice","Explore job opportunities","Looking for a co-founder / partner","Business opportunity / client"] },
@@ -386,18 +388,16 @@
       case "a_nombre": return "a_email";
       case "a_email": return "a_tipo_org";
       case "a_tipo_org": return "a_alcance";
-      case "a_alcance": return "a_departamento";
-      case "a_departamento": return "a_pais";
+      case "a_alcance": return "a_pais";
       case "a_pais": return "a_ciudad";
-      case "a_ciudad": return "a_seniority";
-      case "a_seniority": return "a_vertical";
-      case "a_vertical": return VERTICAL_TO_ROLE[answers.a_vertical] || "b_tipo_org";
+      case "a_ciudad": return "a_vertical";
+      case "a_vertical": return VERTICAL_TO_ROLE[answers.a_vertical] || "a_departamento";
       case "b_tipo_org": return "b_alcance";
-      case "b_alcance": return "b_departamento";
-      case "b_departamento": return "b_vertical";
-      case "b_vertical": return "b_empresa_concreta";
-      case "b_empresa_concreta": return "b_pais";
-      case "b_pais": return "b_seniority";
+      case "b_alcance": return "b_pais";
+      case "b_pais": return "b_empresa_concreta";
+      case "b_empresa_concreta": return "b_vertical";
+      case "b_vertical": return "b_departamento";
+      case "b_departamento": return "b_seniority";
       case "b_seniority": return "b_objetivo";
       case "b_objetivo":
         if (answers.b_objetivo === "Looking for mentorship / advice") return "b_mentoria_area";
@@ -406,8 +406,10 @@
       case "b_mentoria_area": return "b_texto_libre";
       case "b_socio_sector": return "b_texto_libre";
       case "b_texto_libre": return "consentimiento";
+      case "a_departamento": return "a_seniority";
+      case "a_seniority": return "b_tipo_org";
       default:
-        if (ref.indexOf("a_rol_") === 0) return "b_tipo_org";
+        if (ref.indexOf("a_rol_") === 0) return "a_departamento";
         return null;
     }
   }
