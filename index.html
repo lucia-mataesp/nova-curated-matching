@@ -99,8 +99,6 @@
   .step h3{ margin:2px 0 6px 0; font-family:var(--font-head); font-size:17px; font-weight:600; }
   .step p{ margin:0; font-size:14.5px; line-height:1.6; color:var(--text-muted); }
 
-  .why p{ font-size:15.5px; line-height:1.75; color:var(--text-muted); margin:0 0 16px 0; max-width:60ch; }
-  .why strong{ color:var(--text); font-weight:600; }
 
   .closing{ text-align:center; padding:56px 0 72px; }
   .closing h2{ margin:0 0 14px 0; }
@@ -152,6 +150,12 @@
     display:flex; align-items:flex-start; gap:10px;
     background:rgba(227,169,87,0.12); border:1px solid rgba(227,169,87,0.35);
     color:#F0C888; border-radius:12px; padding:14px 16px; font-size:13.5px; line-height:1.55; margin-bottom:32px;
+  }
+  .loading-box{ text-align:center; padding:48px 20px; }
+  .countdown{
+    font-family:var(--font-head); font-weight:700; font-size:48px; color:var(--accent);
+    width:88px; height:88px; margin:0 auto; border-radius:50%;
+    border:2px solid var(--border); display:flex; align-items:center; justify-content:center;
   }
   .match-cards{ display:flex; flex-direction:column; gap:16px; }
   .match-card{
@@ -206,7 +210,7 @@
         <h1>Your next valuable connection could be <em>closer than you think.</em></h1>
         <p class="lede">Nova is a community of thousands of professionals — but finding the right person to talk to shouldn't feel like searching a haystack. Tell us who you'd like to meet, and we'll do the searching for you.</p>
         <button class="cta" id="startBtn">Find your match →</button>
-        <p class="cta-note">Takes about 3 minutes. No spam, no pressure — you decide if you want to connect.</p>
+        <p class="cta-note">Takes about 3 minutes.</p>
       </section>
 
       <section class="block">
@@ -235,13 +239,6 @@
             </div>
           </div>
         </div>
-      </section>
-
-      <section class="block why">
-        <p class="kicker">Why we're doing this</p>
-        <h2>We tried this before. It worked.</h2>
-        <p>In 2024, Nova ran a version of this by hand: members told us who they wanted to meet, and the team searched for a match and made the introduction personally. It worked — <strong>almost everyone who was introduced actually connected</strong> — because it wasn't random, and it wasn't automated spam.</p>
-        <p>We're bringing that back, this time helping more people at once — but keeping the part that made it work: <strong>a real, curated match</strong>, not a directory search.</p>
       </section>
 
       <section class="closing">
@@ -332,17 +329,17 @@
     a_rol_otro: { title: "Within Other, which best describes your role?", type: "dropdown", required: true,
       choices: ["Academical Researcher","Adjunct Faculty / Professor","Administration Manager","Administrative Coordinator","Administrative Intern","Administrative Specialist","Administrator","Architect","Art Director","Artist","Assistant","Biostatistician","Clerk","Creative Director","Head of R & D","Instructor / Teaching Assistant","Interior Designer","Medical Researcher","Officer","PhD Researcher","Photographer","Postdoc Researcher","Public Servant","R & D Analyst","R & D Intern","R & D Manager","Research Assistant","Researcher","Scientist","Secretary","Statistician","Other / not on the list"] },
 
-    b_tipo_org: { title: "What type of organization should this person work at?", desc: "From here on, we're asking about the profile of the person you'd like to meet — not you.", type: "choice", required: true,
+    b_tipo_org: { title: "What type of organization should the person you'd like to connect with work at?", desc: "From here on, we're asking about the profile of the person you'd like to meet — not you.", type: "choice", required: true,
       choices: ["Company / Corporation","Law firm","Consulting firm","Bank / Financial institution","Investment fund (PE/VC)","Startup / Scaleup","Public sector / Academia / NGO","Freelance / Own business","No preference"] },
-    b_alcance: { title: "What scope should this person's organization have?", type: "choice", required: true,
+    b_alcance: { title: "What scope should their organization have?", type: "choice", required: true,
       choices: ["Global / Multinational","International (mid-size)","Large / mid-size local","Small local","No preference"] },
-    b_pais: { title: "What country should this person work in?", type: "short_text", required: true },
-    b_empresa_concreta: { title: "Is there a specific company you'd like this person to work at?", desc: "Optional — no pressure if not, we'll still find a great match either way.", type: "short_text", required: false },
-    b_vertical: { title: "What vertical should this person work in?", desc: "Not sure between two? Select as many as would work — this isn't an either/or.", type: "choice", multi: true, required: true,
+    b_pais: { title: "What country should they work in?", type: "short_text", required: true },
+    b_empresa_concreta: { title: "Is there a specific company you'd like them to work at?", desc: "Optional — no pressure if not, we'll still find a great match either way.", type: "short_text", required: false },
+    b_vertical: { title: "What vertical should they work in?", desc: "Not sure between two? Select as many as would work — this isn't an either/or.", type: "choice", multi: true, required: true,
       choices: ["CEO / Entrepreneurship","Data Science","Engineering","Finance & Accounting","Human Resources","Investment (PE/VC)","Legal","Life Sciences / Healthcare","Marketing","Operations","Product","Sales & Business Development","Software Development","Strategy","Other","No preference"] },
-    b_departamento: { title: "What department should this person work in?", type: "dropdown", required: true,
+    b_departamento: { title: "What department should they work in?", type: "dropdown", required: true,
       choices: ["Accounting","Business Development","Commercial","Communications","Consulting","Customer service","Data management","Engineering","Executive Management (CE)","Finance","Human Resources (HR)","Information Technology (IT)","Legal","Marketing","Mergers and Acquisitions (M&A)","Operations","Product","Research & Development (R&D)","Sales","Strategy","Supply Chain","Other","No preference"] },
-    b_seniority: { title: "What's the minimum seniority level this person should have?", type: "choice", required: true,
+    b_seniority: { title: "What's the minimum seniority level they should have?", type: "choice", required: true,
       choices: ["Intern","Employee / Analyst","Manager / Team Lead","Senior Manager / Director","C-Level / Executive","Founder / Owner","No preference"] },
     b_objetivo: { title: "What's your goal with this connection?", type: "choice", required: true,
       choices: ["Expand my network","Looking for mentorship / advice","Explore job opportunities","Looking for a co-founder / partner","Business opportunity / client"] },
@@ -588,17 +585,39 @@
     return (name || "").split(" ").filter(Boolean).slice(0,2).map(function(p){ return p[0].toUpperCase(); }).join("");
   }
 
+  var loadingTimer = null;
+  function clearLoadingTimer(){
+    if (loadingTimer){ clearInterval(loadingTimer); loadingTimer = null; }
+  }
+
   function renderLoading(){
     formView.hidden = true;
     resultsView.hidden = false;
     document.querySelector("#resultsView .kicker").textContent = "Finding your matches";
     document.querySelector("#resultsView h2").textContent = "One moment...";
     document.getElementById("matchCards").innerHTML =
-      '<p style="color:var(--text-muted); font-size:14px;">Reading your answers and searching the Nova community — this takes a few seconds.</p>';
+      '<div class="loading-box">' +
+        '<div class="countdown" id="countdownNum">8</div>' +
+        '<p style="color:var(--text-muted); font-size:14px; margin:10px 0 0 0;">Reading your answers and searching the Nova community...</p>' +
+      '</div>';
     window.scrollTo({top:0, behavior:"instant"});
+
+    clearLoadingTimer();
+    var remaining = 8;
+    var numEl = document.getElementById("countdownNum");
+    loadingTimer = setInterval(function(){
+      remaining -= 1;
+      if (remaining <= 0){
+        if (numEl) numEl.textContent = "...";
+        clearLoadingTimer();
+        return;
+      }
+      if (numEl) numEl.textContent = remaining;
+    }, 1000);
   }
 
   function renderMatches(matches){
+    clearLoadingTimer();
     document.querySelector("#resultsView .kicker").textContent = "Your suggestions";
     document.querySelector("#resultsView h2").textContent = "People worth meeting";
     var container = document.getElementById("matchCards");
@@ -618,6 +637,7 @@
   }
 
   function renderNoMatch(note){
+    clearLoadingTimer();
     document.querySelector("#resultsView .kicker").textContent = "Your suggestions";
     document.querySelector("#resultsView h2").textContent = "Still looking";
     document.getElementById("matchCards").innerHTML =
@@ -625,6 +645,7 @@
   }
 
   function renderError(){
+    clearLoadingTimer();
     document.querySelector("#resultsView .kicker").textContent = "Something went wrong";
     document.querySelector("#resultsView h2").textContent = "Please try again";
     document.getElementById("matchCards").innerHTML =
