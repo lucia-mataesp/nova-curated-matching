@@ -268,9 +268,6 @@
 
     <!-- ===== RESULTS VIEW ===== -->
     <div id="resultsView" hidden>
-      <div class="preview-banner">
-        ⚠️ <span><strong>Example preview, not a real match.</strong> The live matching engine isn't connected yet — these are placeholder profiles so we can review the layout together. The "Connect" button already points to the real Nova Connect profile pattern (<code>app.novatalent.com/members/{public_id}</code>); it just needs a real match to link to.</span>
-      </div>
       <p class="kicker">Your suggestions</p>
       <h2>People worth meeting</h2>
       <div class="match-cards" id="matchCards"></div>
@@ -587,35 +584,69 @@
     render();
   });
 
-  // NOTE: public_id below is a made-up placeholder shaped like a real Nova Connect id,
-  // not a real member's id. Once real matches come from the backend, swap in each
-  // candidate's actual `public_id` (now present in pool_base_enriched.csv) here.
-  var NOVA_PROFILE_BASE = "https://app.novatalent.com/members/";
-  var EXAMPLE_MATCHES = [
-    { initials:"AR", name:"Alex Rivera (example)", reason:"Senior Product Manager at a mid-size fintech — went from data analyst to leading a full product team, matches what you described.", public_id:"EXAMPLE00PLACEHOLDER0001" },
-    { initials:"JL", name:"Jordan Lee (example)", reason:"Runs growth at an early-stage startup in the same vertical you're looking for — active in the community and open to new connections.", public_id:"EXAMPLE00PLACEHOLDER0002" },
-    { initials:"SO", name:"Sam Okafor (example)", reason:"C-level at a global organization matching your scope preference, with background directly relevant to your goal.", public_id:"EXAMPLE00PLACEHOLDER0003" }
-  ];
+  function initials(name){
+    return (name || "").split(" ").filter(Boolean).slice(0,2).map(function(p){ return p[0].toUpperCase(); }).join("");
+  }
 
-  function showResults(){
+  function renderLoading(){
     formView.hidden = true;
     resultsView.hidden = false;
+    document.querySelector("#resultsView .kicker").textContent = "Finding your matches";
+    document.querySelector("#resultsView h2").textContent = "One moment...";
+    document.getElementById("matchCards").innerHTML =
+      '<p style="color:var(--text-muted); font-size:14px;">Reading your answers and searching the Nova community — this takes a few seconds.</p>';
+    window.scrollTo({top:0, behavior:"instant"});
+  }
+
+  function renderMatches(matches){
+    document.querySelector("#resultsView .kicker").textContent = "Your suggestions";
+    document.querySelector("#resultsView h2").textContent = "People worth meeting";
     var container = document.getElementById("matchCards");
     container.innerHTML = "";
-    EXAMPLE_MATCHES.forEach(function(m){
+    matches.forEach(function(m){
       var card = document.createElement("div");
       card.className = "match-card";
       card.innerHTML =
-        '<div class="avatar">' + m.initials + '</div>' +
+        '<div class="avatar">' + initials(m.name) + '</div>' +
         '<div>' +
           '<p class="match-name">' + m.name + '</p>' +
           '<p class="match-reason">' + m.reason + '</p>' +
-          '<a class="connect-btn" href="' + NOVA_PROFILE_BASE + m.public_id + '" target="_blank" rel="noopener">Connect →</a>' +
-          '<p class="example-tag">Example profile — link goes to a placeholder id, not a real member.</p>' +
+          '<a class="connect-btn" href="' + m.connect_url + '" target="_blank" rel="noopener">Connect →</a>' +
         '</div>';
       container.appendChild(card);
     });
-    window.scrollTo({top:0, behavior:"instant"});
+  }
+
+  function renderNoMatch(note){
+    document.querySelector("#resultsView .kicker").textContent = "Your suggestions";
+    document.querySelector("#resultsView h2").textContent = "Still looking";
+    document.getElementById("matchCards").innerHTML =
+      '<p style="color:var(--text-muted); font-size:14px;">' + (note || "We don't have a strong match yet — we'll keep looking and follow up personally once we do.") + '</p>';
+  }
+
+  function renderError(){
+    document.querySelector("#resultsView .kicker").textContent = "Something went wrong";
+    document.querySelector("#resultsView h2").textContent = "Please try again";
+    document.getElementById("matchCards").innerHTML =
+      '<p style="color:var(--text-muted); font-size:14px;">We could not process your request right now. Please try again in a moment.</p>';
+  }
+
+  function showResults(){
+    renderLoading();
+    fetch("/api/match", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(answers),
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.matches && data.matches.length){
+          renderMatches(data.matches);
+        } else {
+          renderNoMatch(data.note);
+        }
+      })
+      .catch(function(){ renderError(); });
   }
 })();
 </script>
