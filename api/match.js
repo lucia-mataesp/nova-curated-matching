@@ -59,7 +59,9 @@ const SCOPE_MAP = {
 // where they already typed the Spanish name, or a country we haven't seen yet).
 const COUNTRY_MAP = {
   spain: 'España', sweden: 'Suecia', 'united kingdom': 'Reino Unido', uk: 'Reino Unido',
+  'great britain': 'Reino Unido', england: 'Reino Unido',
   'united states': 'Estados Unidos', usa: 'Estados Unidos', us: 'Estados Unidos',
+  'united states of america': 'Estados Unidos', america: 'Estados Unidos', 'u s': 'Estados Unidos',
   italy: 'Italia', france: 'Francia', denmark: 'Dinamarca', germany: 'Alemania',
   switzerland: 'Suiza', norway: 'Noruega', 'united arab emirates': 'Emiratos Árabes Unidos',
   uae: 'Emiratos Árabes Unidos', netherlands: 'Países Bajos', belgium: 'Bélgica',
@@ -70,8 +72,11 @@ const COUNTRY_MAP = {
 
 function mapCountry(input) {
   if (!input) return input;
-  const key = input.trim().toLowerCase();
-  return COUNTRY_MAP[key] || input;
+  // Strip parenthetical asides ("United States (US)" -> "United States"),
+  // punctuation and extra whitespace before the dictionary lookup - free text
+  // gets typed in all kinds of shapes, and a strict match is too brittle.
+  const cleaned = input.replace(/\([^)]*\)/g, '').replace(/[.,]/g, '').trim().toLowerCase();
+  return COUNTRY_MAP[cleaned] || input;
 }
 
 const ROLE_FIELD_REFS = [
@@ -177,33 +182,45 @@ module.exports = async (req, res) => {
   const responseId = insertedResponse.id;
 
   // 2. Layer 1 - hard categorical filter.
-  let query = supabase.from('pool').select('*');
-
-  if (selfTalentId) query = query.neq('talent_id', selfTalentId);
-
-  if (responseRow.wanted_org_type && responseRow.wanted_org_type !== 'No preference') {
-    query = query.eq('org_type', ORG_TYPE_MAP[responseRow.wanted_org_type] || responseRow.wanted_org_type);
-  }
-  if (responseRow.wanted_scope && responseRow.wanted_scope !== 'No preference') {
-    query = query.eq('scope', SCOPE_MAP[responseRow.wanted_scope] || responseRow.wanted_scope);
-  }
-  if (responseRow.wanted_country) {
-    query = query.ilike('country', mapCountry(responseRow.wanted_country));
-  }
   const wantedVerticals = (responseRow.wanted_vertical || [])
     .filter((v) => v && v !== 'No preference')
     .map((v) => VERTICAL_MAP[v] || v);
-  if (wantedVerticals.length) {
-    query = query.in('vertical', wantedVerticals);
-  }
-  if (responseRow.wanted_seniority && responseRow.wanted_seniority !== 'No preference') {
-    query = query.in('seniority', seniorityAtLeast(responseRow.wanted_seniority));
+
+  function buildQuery(includeCountry) {
+    let q = supabase.from('pool').select('*');
+    if (selfTalentId) q = q.neq('talent_id', selfTalentId);
+    if (responseRow.wanted_org_type && responseRow.wanted_org_type !== 'No preference') {
+      q = q.eq('org_type', ORG_TYPE_MAP[responseRow.wanted_org_type] || responseRow.wanted_org_type);
+    }
+    if (responseRow.wanted_scope && responseRow.wanted_scope !== 'No preference') {
+      q = q.eq('scope', SCOPE_MAP[responseRow.wanted_scope] || responseRow.wanted_scope);
+    }
+    if (includeCountry && responseRow.wanted_country) {
+      q = q.ilike('country', mapCountry(responseRow.wanted_country));
+    }
+    if (wantedVerticals.length) q = q.in('vertical', wantedVerticals);
+    if (responseRow.wanted_seniority && responseRow.wanted_seniority !== 'No preference') {
+      q = q.in('seniority', seniorityAtLeast(responseRow.wanted_seniority));
+    }
+    return q.limit(500);
   }
 
-  const { data: filtered, error: filterErr } = await query.limit(500);
+  let { data: filtered, error: filterErr } = await buildQuery(true);
   if (filterErr) {
     res.status(500).json({ error: 'Filter query failed', detail: filterErr.message });
     return;
+  }
+
+  // The country field is free text (typos, "USA" vs "United States (US)", etc.) -
+  // never let it alone zero out an otherwise-good match. Retry without it and be
+  // transparent about the miss instead of silently failing.
+  let countryFallback = false;
+  if ((!filtered || filtered.length === 0) && responseRow.wanted_country) {
+    const retry = await buildQuery(false);
+    if (!retry.error && retry.data && retry.data.length) {
+      filtered = retry.data;
+      countryFallback = true;
+    }
   }
 
   if (!filtered || filtered.length === 0) {
@@ -268,7 +285,7 @@ Respond with ONLY a JSON object, no markdown fences, no explanation outside the 
 Requester's specific interest area: ${responseRow.goal_detail || 'none'}
 Requester's specific company request: ${responseRow.wanted_specific_company || 'none'}
 Requester's department preference (soft signal, not a hard filter): ${responseRow.wanted_department || 'no preference'}
-Requester's free text: "${responseRow.free_text || ''}"
+${countryFallback ? `Note: nobody matched the requested country (${responseRow.wanted_country}), so this shortlist ignores that filter - mention this plainly in the reason for whichever candidate you pick.\n` : ''}Requester's free text: "${responseRow.free_text || ''}"
 
 Candidate shortlist:
 ${candidateLines}`;
