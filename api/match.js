@@ -53,31 +53,41 @@ const SCOPE_MAP = {
   'Small local': 'Small local',
 };
 
-// The pool's country column was enriched in Spanish. The form asks for country
-// as free text in English, so translate common names before matching; fall back
-// to whatever the requester typed if it's not in this list (covers the case
-// where they already typed the Spanish name, or a country we haven't seen yet).
-const COUNTRY_MAP = {
-  spain: 'España', sweden: 'Suecia', 'united kingdom': 'Reino Unido', uk: 'Reino Unido',
-  'great britain': 'Reino Unido', england: 'Reino Unido',
-  'united states': 'Estados Unidos', usa: 'Estados Unidos', us: 'Estados Unidos',
-  'united states of america': 'Estados Unidos', america: 'Estados Unidos', 'u s': 'Estados Unidos',
-  italy: 'Italia', france: 'Francia', denmark: 'Dinamarca', germany: 'Alemania',
-  switzerland: 'Suiza', norway: 'Noruega', 'united arab emirates': 'Emiratos Árabes Unidos',
-  uae: 'Emiratos Árabes Unidos', netherlands: 'Países Bajos', belgium: 'Bélgica',
-  ireland: 'Irlanda', luxembourg: 'Luxemburgo', mexico: 'México', australia: 'Australia',
-  singapore: 'Singapur', austria: 'Austria', canada: 'Canadá', portugal: 'Portugal',
-  india: 'India', finland: 'Finlandia', china: 'China',
+// Country is now a dropdown on the form (English label), but the pool's country
+// column was enriched in Spanish - map the English label to every raw spelling
+// that appears in the data (the enrichment produced a couple of duplicate
+// spellings for the same country, e.g. Qatar/Catar).
+const COUNTRY_OPTIONS = {
+  'Andorra': ['Andorra'], 'Argentina': ['Argentina'], 'Australia': ['Australia'],
+  'Austria': ['Austria'], 'Bahamas': ['Bahamas'], 'Belgium': ['Bélgica'],
+  'Brazil': ['Brasil'], 'Bulgaria': ['Bulgaria'], 'Burundi': ['Burundi'],
+  'Canada': ['Canadá'], 'Chile': ['Chile'], 'China': ['China'],
+  'Colombia': ['Colombia'], "Côte d'Ivoire": ['Costa de Marfil'], 'Croatia': ['Croacia'],
+  'Cyprus': ['Chipre'], 'Czech Republic': ['República Checa', 'Chequia'],
+  'Democratic Republic of the Congo': ['República Democrática del Congo'],
+  'Denmark': ['Dinamarca'], 'Dominican Republic': ['República Dominicana'],
+  'Ecuador': ['Ecuador'], 'Egypt': ['Egipto'], 'Estonia': ['Estonia'],
+  'Ethiopia': ['Etiopía'], 'Finland': ['Finlandia'], 'France': ['Francia'],
+  'Germany': ['Alemania'], 'Ghana': ['Ghana'], 'Gibraltar': ['Gibraltar'],
+  'Greece': ['Grecia'], 'Guatemala': ['Guatemala'], 'Guinea-Bissau': ['Guinea-Bisáu'],
+  'Hong Kong': ['Hong Kong'], 'Hungary': ['Hungría'], 'India': ['India'],
+  'Ireland': ['Irlanda'], 'Israel': ['Israel'], 'Italy': ['Italia'],
+  'Japan': ['Japón'], 'Jordan': ['Jordania'], 'Kenya': ['Kenia'],
+  'Lithuania': ['Lituania'], 'Luxembourg': ['Luxemburgo'], 'Malaysia': ['Malasia'],
+  'Malta': ['Malta'], 'Mexico': ['México'], 'Monaco': ['Mónaco'],
+  'Morocco': ['Marruecos'], 'Netherlands': ['Países Bajos'], 'New Zealand': ['Nueva Zelanda'],
+  'Nigeria': ['Nigeria'], 'Norway': ['Noruega'], 'Pakistan': ['Pakistán'],
+  'Palestine': ['Palestina'], 'Panama': ['Panamá'], 'Peru': ['Perú'],
+  'Philippines': ['Filipinas'], 'Poland': ['Polonia'], 'Portugal': ['Portugal'],
+  'Qatar': ['Catar', 'Qatar'], 'Romania': ['Rumanía', 'Rumania'],
+  'Saudi Arabia': ['Arabia Saudita'], 'Senegal': ['Senegal'], 'Serbia': ['Serbia'],
+  'Singapore': ['Singapur'], 'Slovenia': ['Eslovenia'], 'South Africa': ['Sudáfrica'],
+  'South Korea': ['Corea del Sur'], 'Spain': ['España'], 'Sweden': ['Suecia'],
+  'Switzerland': ['Suiza'], 'Taiwan': ['Taiwán'], 'Thailand': ['Tailandia'],
+  'Turkey': ['Turquía'], 'Uganda': ['Uganda'], 'Ukraine': ['Ucrania'],
+  'United Arab Emirates': ['Emiratos Árabes Unidos'], 'United Kingdom': ['Reino Unido'],
+  'United States': ['Estados Unidos'], 'Vietnam': ['Vietnam'], 'Zambia': ['Zambia'],
 };
-
-function mapCountry(input) {
-  if (!input) return input;
-  // Strip parenthetical asides ("United States (US)" -> "United States"),
-  // punctuation and extra whitespace before the dictionary lookup - free text
-  // gets typed in all kinds of shapes, and a strict match is too brittle.
-  const cleaned = input.replace(/\([^)]*\)/g, '').replace(/[.,]/g, '').trim().toLowerCase();
-  return COUNTRY_MAP[cleaned] || input;
-}
 
 const ROLE_FIELD_REFS = [
   'a_rol_ceo', 'a_rol_datascience', 'a_rol_engineers', 'a_rol_finance', 'a_rol_hr',
@@ -101,6 +111,23 @@ function extractJson(text) {
   } catch (e) {
     return null;
   }
+}
+
+// Splits only on a comma or a standalone " or " - NOT on "&", "/" or "and",
+// which show up inside real company names ("H&M", "AT&T", "Procter and Gamble").
+// A missed multi-company case here is far cheaper than mangling a real one,
+// since this only ever feeds a soft boost, never a hard filter.
+function parseCompanyNames(raw) {
+  if (!raw) return [];
+  return raw
+    .split(/,|\bor\b/i)
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function companyMatches(candidate, companyNames) {
+  const fields = [(candidate.company || '').toLowerCase(), (candidate.company_matched || '').toLowerCase()];
+  return companyNames.some((name) => fields.some((f) => f.includes(name)));
 }
 
 module.exports = async (req, res) => {
@@ -185,6 +212,7 @@ module.exports = async (req, res) => {
   const wantedVerticals = (responseRow.wanted_vertical || [])
     .filter((v) => v && v !== 'No preference')
     .map((v) => VERTICAL_MAP[v] || v);
+  const countryDbValues = responseRow.wanted_country ? (COUNTRY_OPTIONS[responseRow.wanted_country] || [responseRow.wanted_country]) : null;
 
   function buildQuery(includeCountry) {
     let q = supabase.from('pool').select('*');
@@ -195,8 +223,8 @@ module.exports = async (req, res) => {
     if (responseRow.wanted_scope && responseRow.wanted_scope !== 'No preference') {
       q = q.eq('scope', SCOPE_MAP[responseRow.wanted_scope] || responseRow.wanted_scope);
     }
-    if (includeCountry && responseRow.wanted_country) {
-      q = q.ilike('country', mapCountry(responseRow.wanted_country));
+    if (includeCountry && countryDbValues) {
+      q = q.in('country', countryDbValues);
     }
     if (wantedVerticals.length) q = q.in('vertical', wantedVerticals);
     if (responseRow.wanted_seniority && responseRow.wanted_seniority !== 'No preference') {
@@ -211,11 +239,10 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // The country field is free text (typos, "USA" vs "United States (US)", etc.) -
-  // never let it alone zero out an otherwise-good match. Retry without it and be
-  // transparent about the miss instead of silently failing.
+  // A country with zero matches should never zero out an otherwise-good result
+  // on its own - retry without it and be transparent about the miss.
   let countryFallback = false;
-  if ((!filtered || filtered.length === 0) && responseRow.wanted_country) {
+  if ((!filtered || filtered.length === 0) && countryDbValues) {
     const retry = await buildQuery(false);
     if (!retry.error && retry.data && retry.data.length) {
       filtered = retry.data;
@@ -228,16 +255,19 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // Layer 2 (soft) - specific company boost, never a hard filter.
-  const specificCompany = (responseRow.wanted_specific_company || '').trim().toLowerCase();
+  // Layer 2 (soft) - specific company request. A named company matters more than
+  // the country checkbox, so if it doesn't show up in the country-filtered set,
+  // look for it again ignoring country (keeping type/scope/vertical/seniority)
+  // and fold in anyone found - the explicit "who" beats the geography filter.
+  const companyNames = parseCompanyNames(responseRow.wanted_specific_company);
   let pool = filtered;
-  if (specificCompany) {
-    const exactMatches = filtered.filter((c) =>
-      (c.company || '').toLowerCase().includes(specificCompany) ||
-      (c.company_matched || '').toLowerCase().includes(specificCompany)
-    );
-    const rest = filtered.filter((c) => !exactMatches.includes(c));
-    pool = [...exactMatches, ...rest];
+  if (companyNames.length && countryDbValues && !countryFallback) {
+    const filteredIds = new Set(filtered.map((c) => c.talent_id));
+    const crossCountry = await buildQuery(false);
+    if (!crossCountry.error && crossCountry.data) {
+      const extra = crossCountry.data.filter((c) => !filteredIds.has(c.talent_id) && companyMatches(c, companyNames));
+      if (extra.length) pool = [...filtered, ...extra];
+    }
   }
 
   // Layer 4 - anti-saturation: deprioritize people suggested a lot recently.
@@ -254,15 +284,22 @@ module.exports = async (req, res) => {
     suggestionCounts[s.talent_id] = (suggestionCounts[s.talent_id] || 0) + 1;
   });
 
-  const withSpecificMatch = specificCompany
-    ? pool.filter((c) => (c.company || '').toLowerCase().includes(specificCompany) || (c.company_matched || '').toLowerCase().includes(specificCompany))
-    : [];
-  const specificMatchIds = new Set(withSpecificMatch.map((c) => c.talent_id));
+  const specificMatchIds = new Set(
+    companyNames.length ? pool.filter((c) => companyMatches(c, companyNames)).map((c) => c.talent_id) : []
+  );
+  const isMentorshipGoal = responseRow.goal === 'Looking for mentorship / advice';
 
   pool.sort((a, b) => {
-    const aBoost = specificMatchIds.has(a.talent_id) ? 0 : 1;
-    const bBoost = specificMatchIds.has(b.talent_id) ? 0 : 1;
-    if (aBoost !== bBoost) return aBoost - bBoost;
+    const aCompany = specificMatchIds.has(a.talent_id) ? 0 : 1;
+    const bCompany = specificMatchIds.has(b.talent_id) ? 0 : 1;
+    if (aCompany !== bCompany) return aCompany - bCompany;
+
+    if (isMentorshipGoal) {
+      const aMentor = a.mentor_available ? 0 : 1;
+      const bMentor = b.mentor_available ? 0 : 1;
+      if (aMentor !== bMentor) return aMentor - bMentor;
+    }
+
     return (suggestionCounts[a.talent_id] || 0) - (suggestionCounts[b.talent_id] || 0);
   });
 
@@ -271,14 +308,14 @@ module.exports = async (req, res) => {
   // 3. Layer 5 - LLM ranking + confidence.
   const VERTICAL_LABELS = Object.fromEntries(Object.entries(VERTICAL_MAP).map(([label, code]) => [code, label]));
   const candidateLines = shortlist.map((c) => (
-    `id=${c.talent_id} | name=${c.first_name} ${c.last_name} | headline=${c.headline || c.title || ''} | company=${c.company || ''} | vertical=${VERTICAL_LABELS[c.vertical] || c.vertical || ''} | seniority=${c.seniority || 'unknown'} | org_type=${c.org_type || 'unknown'} | scope=${c.scope || 'unknown'}`
+    `id=${c.talent_id} | name=${c.first_name} ${c.last_name} | headline=${c.headline || c.title || ''} | company=${c.company || ''} | vertical=${VERTICAL_LABELS[c.vertical] || c.vertical || ''} | seniority=${c.seniority || 'unknown'} | org_type=${c.org_type || 'unknown'} | scope=${c.scope || 'unknown'}${isMentorshipGoal ? ` | mentor=${c.mentor_available ? 'yes, available' : (c.is_mentor ? 'yes, not currently available' : 'no')}` : ''}`
   )).join('\n');
 
   const systemPrompt = `You are helping Nova Talent, a professional community, match a member with 1-3 people worth introducing them to.
 You will get a requester's stated goal and free-text description, plus a shortlist of candidates who already passed hard filters (organization type, scope, country, vertical, seniority).
 Your job: pick the best 1-3 candidates from the shortlist (or fewer if none are a good fit - never invent a candidate not in the list), write a one-sentence reason for each grounded in their actual profile data, and give an honest overall confidence score from 0 to 100 for how well this shortlist satisfies the request.
 If the requester named a specific company and no candidate is from that company, say so plainly in the reason for whichever candidate you pick instead (e.g. "not at Google, but a similarly-sized global tech company").
-Respond with ONLY a JSON object, no markdown fences, no explanation outside the JSON, in this exact shape:
+${isMentorshipGoal ? 'The requester is looking for mentorship - candidates marked as an available mentor should be strongly preferred when they otherwise fit, since they have explicitly opted in to mentoring.\n' : ''}Respond with ONLY a JSON object, no markdown fences, no explanation outside the JSON, in this exact shape:
 {"picks": [{"talent_id": 12345, "reason": "..."}], "confidence": 0-100}`;
 
   const userPrompt = `Requester's goal: ${responseRow.goal || 'not specified'}
