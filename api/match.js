@@ -46,6 +46,18 @@ const ORG_TYPE_MAP = {
   'Freelance / Own business': 'Freelance/Own business',
 };
 
+// Friendly, user-facing phrasing for why a given hard filter was relaxed -
+// used to tell people something true and specific instead of a vague
+// "not fully confident" disclaimer.
+const RELAXATION_FRIENDLY = {
+  'country': "there aren't many people from that country in the community yet",
+  'scope (included people with unverified scope)': "we don't have company size/scope confirmed for everyone in that space yet",
+  'seniority': 'we had to widen beyond the exact seniority level you asked for',
+  'scope': 'we had to widen beyond the exact company size/scope you asked for',
+  'organization type': 'we had to widen beyond the exact organization type you asked for',
+  'vertical': 'we had to widen beyond the exact industry/vertical you asked for',
+};
+
 const SCOPE_MAP = {
   'Global / Multinational': 'Global/Multinational',
   'International (mid-size)': 'International mid-size',
@@ -340,11 +352,13 @@ If the requester named a specific company and no candidate is from that company,
 ${isMentorshipGoal ? 'The requester is looking for mentorship - candidates marked as an available mentor should be strongly preferred when they otherwise fit, since they have explicitly opted in to mentoring.\n' : ''}Respond with ONLY a JSON object, no markdown fences, no explanation outside the JSON, in this exact shape:
 {"picks": [{"talent_id": 12345, "reason": "..."}], "confidence": 0-100}`;
 
+  const wantedOrgTypeDetail = answers.b_tipo_org_detail || null;
+
   const userPrompt = `Requester's goal: ${responseRow.goal || 'not specified'}
 Requester's specific interest area: ${responseRow.goal_detail || 'none'}
 Requester's specific company request: ${responseRow.wanted_specific_company || 'none'}
 Requester's department preference (soft signal, not a hard filter): ${responseRow.wanted_department || 'no preference'}
-${relaxationNote ? `Note: the strict filters matched nobody, so this shortlist comes from a relaxed search (${relaxationNote}) - mention plainly in the reason for whichever candidate you pick which of their requested criteria this person doesn't actually meet.\n` : ''}Requester's free text: "${responseRow.free_text || ''}"
+${wantedOrgTypeDetail ? `Requester's sub-preference within Public sector/Academia/NGO (soft signal - pool data doesn't track this distinction, so use it only as a tiebreaker when a candidate's headline/company clearly indicates it): ${wantedOrgTypeDetail}\n` : ''}${relaxationNote ? `Note: the strict filters matched nobody, so this shortlist comes from a relaxed search (${relaxationNote}) - mention plainly in the reason for whichever candidate you pick which of their requested criteria this person doesn't actually meet.\n` : ''}Requester's free text: "${responseRow.free_text || ''}"
 
 Candidate shortlist:
 ${candidateLines}`;
@@ -387,6 +401,23 @@ ${candidateLines}`;
   // Low confidence is communicated, not hidden.
   const picks = llmResult.picks.slice(0, 3);
 
+  // Give a specific, true reason for low confidence instead of a vague disclaimer -
+  // derived from what we actually know happened (which filter got relaxed, whether
+  // the named company was found, how thin the candidate pool was), never guessed.
+  let confidenceReason = null;
+  if (lowConfidence) {
+    const pickedNamedCompany = companyNames.length && picks.some((p) => specificMatchIds.has(p.talent_id));
+    if (companyNames.length && !pickedNamedCompany) {
+      confidenceReason = `we couldn't find anyone currently at ${responseRow.wanted_specific_company} in the community`;
+    } else if (appliedState.label) {
+      confidenceReason = RELAXATION_FRIENDLY[appliedState.label] || 'we had to broaden the search to find real candidates';
+    } else if (shortlist.length < 5) {
+      confidenceReason = "there aren't many people matching this exact combination in the community yet";
+    } else {
+      confidenceReason = "the fit isn't as strong as we'd like on paper";
+    }
+  }
+
   // 4. Persist suggestions for later review and for anti-saturation counting.
   const candidateById = Object.fromEntries(shortlist.map((c) => [c.talent_id, c]));
   const suggestionRows = picks.map((p, i) => ({
@@ -421,6 +452,6 @@ ${candidateLines}`;
     lowConfidence,
     note: matches.length === 0
       ? 'Could not find anyone worth suggesting from the shortlist.'
-      : (lowConfidence ? "These are our best options right now, though we're not fully confident in the fit - take the reasons with a grain of salt." : null),
+      : (lowConfidence ? `These are the best people we found, though ${confidenceReason} - take the reasons with a grain of salt.` : null),
   });
 };

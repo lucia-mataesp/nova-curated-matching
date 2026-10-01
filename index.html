@@ -334,6 +334,8 @@
       choices: ["Company / Corporation","Law firm","Consulting firm","Bank / Financial institution","Investment fund (PE/VC)","Startup / Scaleup","Public sector / Academia / NGO","Freelance / Own business","No preference"] },
     b_alcance: { title: "What scope should their organization have?", type: "choice", required: true,
       choices: ["Global / Multinational","International (mid-size)","Large / mid-size local","Small local","No preference"] },
+    b_tipo_org_detail: { title: "Which of these best describes it?", type: "choice", required: true,
+      choices: ["Public sector / Government","Academia / Research","NGO / Nonprofit"] },
     b_pais: { title: "What country should they work in?", type: "dropdown", required: true,
       choices: ["No preference","Australia","Austria","Belgium","Canada","China","Colombia","Denmark","Finland","France","Germany","India","Ireland","Italy","Luxembourg","Mexico","Netherlands","Norway","Portugal","Singapore","Spain","Sweden","Switzerland","United Arab Emirates","United Kingdom","United States","Other"] },
     b_empresa_concreta: { title: "Is there a specific company you'd like them to work at?", desc: "Optional — no pressure if not, we'll still find a great match either way.", type: "short_text", required: false },
@@ -388,7 +390,12 @@
       case "a_pais": return "a_ciudad";
       case "a_ciudad": return "a_vertical";
       case "a_vertical": return VERTICAL_TO_ROLE[answers.a_vertical] || "a_departamento";
-      case "b_tipo_org": return "b_alcance";
+      case "b_tipo_org":
+        // Scope (global/local) doesn't map cleanly onto public sector / academia / NGO,
+        // so skip it and ask which of the three it actually is instead.
+        if (answers.b_tipo_org === "Public sector / Academia / NGO") return "b_tipo_org_detail";
+        return "b_alcance";
+      case "b_tipo_org_detail": return "b_pais";
       case "b_alcance": return "b_pais";
       case "b_pais": return "b_empresa_concreta";
       case "b_empresa_concreta": return "b_vertical";
@@ -618,16 +625,16 @@
     }, 1000);
   }
 
-  function renderMatches(matches, lowConfidence){
+  function renderMatches(matches, lowConfidence, note){
     clearLoadingTimer();
     document.querySelector("#resultsView .kicker").textContent = "Your suggestions";
     document.querySelector("#resultsView h2").textContent = "People worth meeting";
     var container = document.getElementById("matchCards");
     container.innerHTML = "";
-    if (lowConfidence){
+    if (lowConfidence && note){
       var caveat = document.createElement("p");
       caveat.style.cssText = "color:var(--text-muted); font-size:13px; margin:0 0 16px 0;";
-      caveat.textContent = "These are our best options right now, though we're not fully confident in the fit.";
+      caveat.textContent = note;
       container.appendChild(caveat);
     }
     matches.forEach(function(m){
@@ -670,7 +677,7 @@
       .then(function(r){ return r.json(); })
       .then(function(data){
         if (data.matches && data.matches.length){
-          renderMatches(data.matches, data.lowConfidence);
+          renderMatches(data.matches, data.lowConfidence, data.note);
         } else {
           renderNoMatch(data.note);
         }
