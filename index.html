@@ -618,12 +618,18 @@
     }, 1000);
   }
 
-  function renderMatches(matches){
+  function renderMatches(matches, lowConfidence){
     clearLoadingTimer();
     document.querySelector("#resultsView .kicker").textContent = "Your suggestions";
     document.querySelector("#resultsView h2").textContent = "People worth meeting";
     var container = document.getElementById("matchCards");
     container.innerHTML = "";
+    if (lowConfidence){
+      var caveat = document.createElement("p");
+      caveat.style.cssText = "color:var(--text-muted); font-size:13px; margin:0 0 16px 0;";
+      caveat.textContent = "These are our best options right now, though we're not fully confident in the fit.";
+      container.appendChild(caveat);
+    }
     matches.forEach(function(m){
       var card = document.createElement("div");
       card.className = "match-card";
@@ -664,7 +670,7 @@
       .then(function(r){ return r.json(); })
       .then(function(data){
         if (data.matches && data.matches.length){
-          renderMatches(data.matches);
+          renderMatches(data.matches, data.lowConfidence);
         } else {
           renderNoMatch(data.note);
         }

@@ -208,62 +208,84 @@ module.exports = async (req, res) => {
   }
   const responseId = insertedResponse.id;
 
-  // 2. Layer 1 - hard categorical filter.
+  // 2. Layer 1 - hard categorical filter, with a cascading relaxation when the
+  // full combination matches nobody. Only one constraint is ever dropped at a
+  // time (accumulating), in order from "safest to relax" to "most central to
+  // the ask" - country first, vertical only as an absolute last resort.
   const wantedVerticals = (responseRow.wanted_vertical || [])
     .filter((v) => v && v !== 'No preference')
     .map((v) => VERTICAL_MAP[v] || v);
   const countryDbValues = responseRow.wanted_country ? (COUNTRY_OPTIONS[responseRow.wanted_country] || [responseRow.wanted_country]) : null;
+  const scopeValue = (responseRow.wanted_scope && responseRow.wanted_scope !== 'No preference')
+    ? (SCOPE_MAP[responseRow.wanted_scope] || responseRow.wanted_scope)
+    : null;
 
-  function buildQuery(includeCountry) {
+  function buildQuery(state) {
     let q = supabase.from('pool').select('*');
     if (selfTalentId) q = q.neq('talent_id', selfTalentId);
-    if (responseRow.wanted_org_type && responseRow.wanted_org_type !== 'No preference') {
+    if (!state.dropOrgType && responseRow.wanted_org_type && responseRow.wanted_org_type !== 'No preference') {
       q = q.eq('org_type', ORG_TYPE_MAP[responseRow.wanted_org_type] || responseRow.wanted_org_type);
     }
-    if (responseRow.wanted_scope && responseRow.wanted_scope !== 'No preference') {
-      q = q.eq('scope', SCOPE_MAP[responseRow.wanted_scope] || responseRow.wanted_scope);
+    if (!state.dropScope && scopeValue) {
+      q = state.scopeIncludeUnknown ? q.or(`scope.eq.${scopeValue},scope.is.null`) : q.eq('scope', scopeValue);
     }
-    if (includeCountry && countryDbValues) {
+    if (!state.dropCountry && countryDbValues) {
       q = q.in('country', countryDbValues);
     }
-    if (wantedVerticals.length) q = q.in('vertical', wantedVerticals);
-    if (responseRow.wanted_seniority && responseRow.wanted_seniority !== 'No preference') {
+    if (!state.dropVertical && wantedVerticals.length) q = q.in('vertical', wantedVerticals);
+    if (!state.dropSeniority && responseRow.wanted_seniority && responseRow.wanted_seniority !== 'No preference') {
       q = q.in('seniority', seniorityAtLeast(responseRow.wanted_seniority));
     }
     return q.limit(500);
   }
 
-  let { data: filtered, error: filterErr } = await buildQuery(true);
-  if (filterErr) {
-    res.status(500).json({ error: 'Filter query failed', detail: filterErr.message });
-    return;
-  }
+  // Each step keeps every relaxation from the steps before it (cumulative).
+  const RELAXATION_STEPS = [
+    { label: null },
+    { label: 'country', dropCountry: true },
+    { label: 'scope (included people with unverified scope)', dropCountry: true, scopeIncludeUnknown: true },
+    { label: 'seniority', dropCountry: true, scopeIncludeUnknown: true, dropSeniority: true },
+    { label: 'scope', dropCountry: true, dropScope: true, dropSeniority: true },
+    { label: 'organization type', dropCountry: true, dropScope: true, dropSeniority: true, dropOrgType: true },
+    { label: 'vertical', dropCountry: true, dropScope: true, dropSeniority: true, dropOrgType: true, dropVertical: true },
+  ];
 
-  // A country with zero matches should never zero out an otherwise-good result
-  // on its own - retry without it and be transparent about the miss.
-  let countryFallback = false;
-  if ((!filtered || filtered.length === 0) && countryDbValues) {
-    const retry = await buildQuery(false);
-    if (!retry.error && retry.data && retry.data.length) {
-      filtered = retry.data;
-      countryFallback = true;
+  let filtered = null;
+  let appliedState = RELAXATION_STEPS[0];
+  const relaxedLabels = [];
+  for (const step of RELAXATION_STEPS) {
+    const { data, error } = await buildQuery(step);
+    if (error) {
+      res.status(500).json({ error: 'Filter query failed', detail: error.message });
+      return;
+    }
+    if (step.label) relaxedLabels.push(step.label);
+    if (data && data.length) {
+      filtered = data;
+      appliedState = step;
+      break;
     }
   }
 
-  if (!filtered || filtered.length === 0) {
-    res.status(200).json({ matches: [], note: 'No candidates matched the hard filters.' });
+  if (!filtered) {
+    res.status(200).json({ matches: [], note: 'No candidates matched the hard filters, even after relaxing most of them.' });
     return;
   }
 
+  const relaxationNote = appliedState.label
+    ? `Relaxed: ${relaxedLabels.slice(0, relaxedLabels.indexOf(appliedState.label) + 1).join(', ')}`
+    : null;
+  const countryFallback = !!appliedState.dropCountry;
+
   // Layer 2 (soft) - specific company request. A named company matters more than
-  // the country checkbox, so if it doesn't show up in the country-filtered set,
-  // look for it again ignoring country (keeping type/scope/vertical/seniority)
+  // the country checkbox, so if it doesn't show up in the filtered set, look for
+  // it again ignoring country (keeping type/scope/vertical/seniority as applied)
   // and fold in anyone found - the explicit "who" beats the geography filter.
   const companyNames = parseCompanyNames(responseRow.wanted_specific_company);
   let pool = filtered;
   if (companyNames.length && countryDbValues && !countryFallback) {
     const filteredIds = new Set(filtered.map((c) => c.talent_id));
-    const crossCountry = await buildQuery(false);
+    const crossCountry = await buildQuery({ ...appliedState, dropCountry: true });
     if (!crossCountry.error && crossCountry.data) {
       const extra = crossCountry.data.filter((c) => !filteredIds.has(c.talent_id) && companyMatches(c, companyNames));
       if (extra.length) pool = [...filtered, ...extra];
@@ -322,13 +344,16 @@ ${isMentorshipGoal ? 'The requester is looking for mentorship - candidates marke
 Requester's specific interest area: ${responseRow.goal_detail || 'none'}
 Requester's specific company request: ${responseRow.wanted_specific_company || 'none'}
 Requester's department preference (soft signal, not a hard filter): ${responseRow.wanted_department || 'no preference'}
-${countryFallback ? `Note: nobody matched the requested country (${responseRow.wanted_country}), so this shortlist ignores that filter - mention this plainly in the reason for whichever candidate you pick.\n` : ''}Requester's free text: "${responseRow.free_text || ''}"
+${relaxationNote ? `Note: the strict filters matched nobody, so this shortlist comes from a relaxed search (${relaxationNote}) - mention plainly in the reason for whichever candidate you pick which of their requested criteria this person doesn't actually meet.\n` : ''}Requester's free text: "${responseRow.free_text || ''}"
 
 Candidate shortlist:
 ${candidateLines}`;
 
-  let llmResult;
-  try {
+  // The model is asked for strict JSON and almost always complies, but on the
+  // rare malformed response, retry once before giving up - a parsing hiccup is
+  // not the same thing as "no good candidates", and silently treating it as one
+  // would show a false "no match" when the model may have picked someone fine.
+  async function callLLM() {
     const message = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 1024,
@@ -336,7 +361,15 @@ ${candidateLines}`;
       messages: [{ role: 'user', content: userPrompt }],
     });
     const textBlock = message.content.find((b) => b.type === 'text');
-    llmResult = textBlock ? extractJson(textBlock.text) : null;
+    return textBlock ? extractJson(textBlock.text) : null;
+  }
+
+  let llmResult;
+  try {
+    llmResult = await callLLM();
+    if (!llmResult || !Array.isArray(llmResult.picks)) {
+      llmResult = await callLLM();
+    }
   } catch (e) {
     res.status(500).json({ error: 'LLM call failed', detail: e.message });
     return;
@@ -348,19 +381,22 @@ ${candidateLines}`;
   }
 
   const confidence = typeof llmResult.confidence === 'number' ? llmResult.confidence : 0;
-  const belowThreshold = confidence < CONFIDENCE_THRESHOLD;
-  const picks = belowThreshold ? [] : llmResult.picks.slice(0, 3);
+  const lowConfidence = confidence < CONFIDENCE_THRESHOLD;
+  // Always show the best picks the model found - never force a result it didn't
+  // actually propose, but don't silently withhold a modest-but-real one either.
+  // Low confidence is communicated, not hidden.
+  const picks = llmResult.picks.slice(0, 3);
 
-  // 4. Persist suggestions (even below-threshold attempts, marked shown=false, for later review).
+  // 4. Persist suggestions for later review and for anti-saturation counting.
   const candidateById = Object.fromEntries(shortlist.map((c) => [c.talent_id, c]));
-  const suggestionRows = llmResult.picks.slice(0, 3).map((p, i) => ({
+  const suggestionRows = picks.map((p, i) => ({
     response_id: responseId,
     talent_id: p.talent_id,
     rank: i + 1,
     reason: p.reason,
     confidence_score: confidence,
     model: MODEL,
-    shown: !belowThreshold,
+    shown: true,
   }));
   if (suggestionRows.length) {
     await supabase.from('suggestions').insert(suggestionRows);
@@ -382,6 +418,9 @@ ${candidateLines}`;
   res.status(200).json({
     matches,
     confidence,
-    note: belowThreshold ? "We don't have a strong match yet - we'll keep looking and follow up." : null,
+    lowConfidence,
+    note: matches.length === 0
+      ? 'Could not find anyone worth suggesting from the shortlist.'
+      : (lowConfidence ? "These are our best options right now, though we're not fully confident in the fit - take the reasons with a grain of salt." : null),
   });
 };
