@@ -37,9 +37,9 @@ const VERTICAL_MAP = {
 
 const ORG_TYPE_MAP = {
   'Company / Corporation': 'Company/Corporation',
-  'Law firm': 'Law firm', // no candidates classified this way yet - known gap
+  'Law firm': 'Law firm',
   'Consulting firm': 'Consulting firm',
-  'Bank / Financial institution': 'Bank/Financial institution', // same known gap
+  'Bank / Financial institution': 'Bank/Financial institution',
   'Investment fund (PE/VC)': 'Investment fund (PE/VC)',
   'Startup / Scaleup': 'Startup/Scaleup',
   'Public sector / Academia / NGO': 'Public sector/Academia/NGO',
