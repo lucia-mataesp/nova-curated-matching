@@ -680,12 +680,10 @@
     document.querySelector("#resultsView h2").textContent = "People worth meeting";
     var container = document.getElementById("matchCards");
     container.innerHTML = "";
-    if (lowConfidence && note){
-      var caveat = document.createElement("p");
-      caveat.style.cssText = "color:var(--text-muted); font-size:13px; margin:0 0 16px 0;";
-      caveat.textContent = note;
-      container.appendChild(caveat);
-    }
+    // The generic low-confidence disclaimer was dropped - each card's own
+    // reason already argues the specific match (including saying so plainly
+    // when it's based on past experience rather than a current role), which
+    // carries more real information than a meta "take this with a grain of salt".
     matches.forEach(function(m){
       var card = document.createElement("div");
       card.className = "match-card";
