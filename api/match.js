@@ -5,6 +5,7 @@ const MODEL = 'claude-haiku-4-5';
 const CONFIDENCE_THRESHOLD = 50; // 0-100. Below this, we don't force a suggestion.
 const CANDIDATE_CAP = 25; // how many survivors we actually send to the LLM
 const ANTI_SATURATION_WINDOW_DAYS = 30;
+const ACTIVITY_WINDOW_DAYS = 30;
 
 const SENIORITY_ORDER = [
   'Intern',
@@ -142,6 +143,68 @@ function companyMatches(candidate, companyNames) {
   return companyNames.some((name) => fields.some((f) => f.includes(name)));
 }
 
+// Strict email validation doubles as SQL-injection defense here: a string that
+// can't contain a quote or statement separator and still matches this pattern
+// is safe to inline into the Metabase query text below.
+function isValidEmail(email) {
+  return /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(email || '');
+}
+
+// If someone filling the form isn't already in our base pool, check whether
+// they're a real, accepted Nova member (same bar as the base pool itself) and,
+// if so, add them using their own Section A answers - so the pool grows with
+// every response instead of staying frozen at the one-time base extract.
+async function lookupAndAddSelfToPool(supabase, email, answers) {
+  const metabaseKey = process.env.METABASE_API_KEY;
+  if (!metabaseKey || !isValidEmail(email)) return null;
+
+  const safeEmail = email.replace(/'/g, "''");
+  const sql = `
+    SELECT t.id AS talent_id, t.public_id, nt.last_connection
+    FROM raw.talent t
+    JOIN raw.user u ON u.id = t.user_id
+    JOIN raw.application a ON a.talent_id = t.id AND a.accepted_at IS NOT NULL
+    JOIN raw.nova_talent nt ON nt.talent_id = t.id
+    WHERE lower(u.email) = lower('${safeEmail}')
+    LIMIT 1
+  `;
+
+  let rows;
+  try {
+    const mbRes = await fetch('https://metabase.novatalent.com/api/dataset', {
+      method: 'POST',
+      headers: { 'x-api-key': metabaseKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ database: 2, type: 'native', native: { query: sql } }),
+    });
+    const mbJson = await mbRes.json();
+    rows = mbJson && mbJson.data && mbJson.data.rows;
+  } catch (e) {
+    return null; // best-effort - never block the main matching flow on this
+  }
+  if (!rows || !rows.length) return null;
+
+  const [talentId, publicId, lastConnection] = rows[0];
+  if (!publicId) return null;
+
+  const countryDb = answers.a_pais ? (COUNTRY_OPTIONS[answers.a_pais] || [answers.a_pais])[0] : null;
+  const poolRow = {
+    talent_id: talentId,
+    public_id: publicId,
+    email,
+    first_name: (answers.a_nombre || '').split(' ')[0] || null,
+    last_name: (answers.a_nombre || '').split(' ').slice(1).join(' ') || null,
+    country: countryDb,
+    org_type: ORG_TYPE_MAP[answers.a_tipo_org] || null,
+    scope: SCOPE_MAP[answers.a_alcance] || null,
+    vertical: VERTICAL_MAP[answers.a_vertical] || null,
+    seniority: answers.a_seniority || null,
+    last_connection: lastConnection || null,
+  };
+  const { error } = await supabase.from('pool').upsert(poolRow, { onConflict: 'talent_id' });
+  if (error) return null;
+  return talentId;
+}
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -205,6 +268,9 @@ module.exports = async (req, res) => {
       .ilike('email', responseRow.email)
       .limit(1);
     if (selfRows && selfRows.length) selfTalentId = selfRows[0].talent_id;
+  }
+  if (!selfTalentId && responseRow.email) {
+    selfTalentId = await lookupAndAddSelfToPool(supabase, responseRow.email, answers);
   }
   responseRow.pool_talent_id = selfTalentId;
 
@@ -322,6 +388,8 @@ module.exports = async (req, res) => {
     companyNames.length ? pool.filter((c) => companyMatches(c, companyNames)).map((c) => c.talent_id) : []
   );
   const isMentorshipGoal = responseRow.goal === 'Looking for mentorship / advice';
+  const activitySince = Date.now() - ACTIVITY_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+  const isRecentlyActive = (c) => c.last_connection && new Date(c.last_connection).getTime() >= activitySince;
 
   pool.sort((a, b) => {
     const aCompany = specificMatchIds.has(a.talent_id) ? 0 : 1;
@@ -333,6 +401,12 @@ module.exports = async (req, res) => {
       const bMentor = b.mentor_available ? 0 : 1;
       if (aMentor !== bMentor) return aMentor - bMentor;
     }
+
+    // Among otherwise-similar candidates, someone active in the last 30 days
+    // is a better bet than someone who may not even check Nova Connect anymore.
+    const aActive = isRecentlyActive(a) ? 0 : 1;
+    const bActive = isRecentlyActive(b) ? 0 : 1;
+    if (aActive !== bActive) return aActive - bActive;
 
     return (suggestionCounts[a.talent_id] || 0) - (suggestionCounts[b.talent_id] || 0);
   });

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Curated Matching — Stats</title>
+<style>
+  :root{ --bg:#090E12; --surface:#131C24; --accent:#0EB0A4; --text:#F4F6F7; --text-muted:#8A97A0; --border:#223039; }
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:'Open Sans', Arial, sans-serif; padding:16px; }
+  h1{ font-family:'DM Sans', Arial, sans-serif; font-size:20px; margin:0 0 24px 0; }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:16px; max-width:900px; }
+  .tile{ background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; }
+  .tile .num{ font-size:32px; font-weight:700; color:var(--accent); font-family:'DM Sans', Arial, sans-serif; }
+  .tile .label{ font-size:13px; color:var(--text-muted); margin-top:4px; }
+  .updated{ margin-top:24px; font-size:12px; color:var(--text-muted); }
+  .error{ color:#e07a7a; }
+</style>
+</head>
+<body>
+  <h1>Curated Matching — Pilot stats</h1>
+  <div class="grid" id="grid">Loading...</div>
+  <div class="updated" id="updated"></div>
+
+<script>
+fetch("/api/stats")
+  .then(r => r.json())
+  .then(d => {
+    var grid = document.getElementById("grid");
+    grid.innerHTML = "";
+    var tiles = [
+      { num: d.total_responses, label: "Form responses" },
+      { num: d.suggestions_shown, label: "Suggestions shown" },
+      { num: d.suggestions_clicked, label: "\"Connect\" clicks" },
+      { num: (d.click_through_rate_pct != null ? d.click_through_rate_pct + "%" : "—"), label: "Shown → clicked rate" },
+      { num: d.responses_with_no_match, label: "Responses with no match" },
+    ];
+    tiles.forEach(function(t){
+      var div = document.createElement("div");
+      div.className = "tile";
+      div.innerHTML = '<div class="num">' + t.num + '</div><div class="label">' + t.label + '</div>';
+      grid.appendChild(div);
+    });
+    document.getElementById("updated").textContent = "Updated: " + new Date(d.generated_at).toLocaleString();
+  })
+  .catch(function(){
+    document.getElementById("grid").innerHTML = '<p class="error">Could not load stats.</p>';
+  });
+</script>
+</body>
+</html>
