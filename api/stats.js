@@ -58,7 +58,7 @@ module.exports = async (req, res) => {
     matched: respondedWithMatch.has(r.id),
   }));
 
-  res.status(200).json({
+  const payload = {
     total_responses: totalResponses || 0,
     suggestions_shown: totalShown || 0,
     suggestions_clicked: totalClicked || 0,
@@ -70,5 +70,15 @@ module.exports = async (req, res) => {
     self_vertical_breakdown: selfVerticalBreakdown,
     recent_responses: recentResponses,
     generated_at: new Date().toISOString(),
-  });
+  };
+
+  // ?full_text=1 - every non-empty free_text value (not just the latest 50),
+  // for periodic qualitative theme analysis.
+  if (req.query && (req.query.full_text === '1' || req.query.full_text === 'true')) {
+    payload.all_free_text = rows
+      .filter((r) => r.free_text)
+      .map((r) => ({ created_at: r.created_at, self_vertical: r.self_vertical, goal: r.goal, free_text: r.free_text }));
+  }
+
+  res.status(200).json(payload);
 };
