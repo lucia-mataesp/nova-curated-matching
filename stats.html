@@ -5,23 +5,78 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Curated Matching — Stats</title>
 <style>
-  :root{ --bg:#090E12; --surface:#131C24; --accent:#0EB0A4; --text:#F4F6F7; --text-muted:#8A97A0; --border:#223039; }
-  body{ margin:0; background:var(--bg); color:var(--text); font-family:'Open Sans', Arial, sans-serif; padding:16px; }
+  :root{ --bg:#090E12; --surface:#131C24; --surface-2:#1A2530; --accent:#0EB0A4; --text:#F4F6F7; --text-muted:#8A97A0; --border:#223039; }
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:'Open Sans', Arial, sans-serif; padding:16px 16px 48px; }
   h1{ font-family:'DM Sans', Arial, sans-serif; font-size:20px; margin:0 0 24px 0; }
+  h2{ font-family:'DM Sans', Arial, sans-serif; font-size:16px; margin:40px 0 16px 0; }
   .grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:16px; max-width:900px; }
   .tile{ background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; }
   .tile .num{ font-size:32px; font-weight:700; color:var(--accent); font-family:'DM Sans', Arial, sans-serif; }
   .tile .label{ font-size:13px; color:var(--text-muted); margin-top:4px; }
   .updated{ margin-top:24px; font-size:12px; color:var(--text-muted); }
   .error{ color:#e07a7a; }
+
+  .bar-section{ max-width:900px; }
+  .bar-row{ display:grid; grid-template-columns:200px 1fr 40px; align-items:center; gap:10px; margin:6px 0; font-size:13px; }
+  .bar-row .bar-label{ color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bar-track{ background:var(--surface-2); border-radius:4px; height:16px; overflow:hidden; }
+  .bar-fill{ background:var(--accent); height:100%; border-radius:4px; }
+  .bar-count{ color:var(--text-muted); text-align:right; }
+
+  table.resp-table{ width:100%; max-width:1100px; border-collapse:collapse; font-size:13px; }
+  table.resp-table th{ text-align:left; color:var(--text-muted); font-weight:400; border-bottom:1px solid var(--border); padding:8px; }
+  table.resp-table td{ border-bottom:1px solid var(--border); padding:8px; vertical-align:top; }
+  table.resp-table tr:hover td{ background:var(--surface); }
+  .pill{ display:inline-block; background:var(--surface-2); border-radius:999px; padding:2px 8px; font-size:11px; color:var(--text-muted); }
+  .pill.matched{ color:var(--accent); }
 </style>
 </head>
 <body>
   <h1>Curated Matching — Pilot stats</h1>
   <div class="grid" id="grid">Loading...</div>
+
+  <h2>What people are asking for</h2>
+  <div class="bar-section" id="breakdowns"></div>
+
+  <h2>Responses</h2>
+  <table class="resp-table" id="respTable"></table>
+
   <div class="updated" id="updated"></div>
 
 <script>
+function renderBars(container, title, items){
+  var wrap = document.createElement("div");
+  wrap.style.marginBottom = "28px";
+  var h = document.createElement("div");
+  h.style.cssText = "font-size:13px; color:var(--text-muted); margin-bottom:8px;";
+  h.textContent = title;
+  wrap.appendChild(h);
+  if (!items.length){
+    var empty = document.createElement("div");
+    empty.style.cssText = "font-size:13px; color:var(--text-muted);";
+    empty.textContent = "No data yet.";
+    wrap.appendChild(empty);
+  } else {
+    var max = items[0].count;
+    items.slice(0, 10).forEach(function(it){
+      var row = document.createElement("div");
+      row.className = "bar-row";
+      row.innerHTML =
+        '<div class="bar-label">' + it.label + '</div>' +
+        '<div class="bar-track"><div class="bar-fill" style="width:' + Math.max(4, Math.round(it.count / max * 100)) + '%"></div></div>' +
+        '<div class="bar-count">' + it.count + '</div>';
+      wrap.appendChild(row);
+    });
+  }
+  container.appendChild(wrap);
+}
+
+function esc(s){
+  var d = document.createElement("div");
+  d.textContent = s || "";
+  return d.innerHTML;
+}
+
 fetch("/api/stats")
   .then(r => r.json())
   .then(d => {
@@ -40,6 +95,30 @@ fetch("/api/stats")
       div.innerHTML = '<div class="num">' + t.num + '</div><div class="label">' + t.label + '</div>';
       grid.appendChild(div);
     });
+
+    var breakdowns = document.getElementById("breakdowns");
+    renderBars(breakdowns, "Goal of the connection", d.goal_breakdown || []);
+    renderBars(breakdowns, "Vertical they're looking for", d.wanted_vertical_breakdown || []);
+    renderBars(breakdowns, "Department they're looking for", d.wanted_department_breakdown || []);
+    renderBars(breakdowns, "Requesters' own vertical (who's using the tool)", d.self_vertical_breakdown || []);
+
+    var table = document.getElementById("respTable");
+    var rows = d.recent_responses || [];
+    var head = '<tr><th>Date</th><th>Name</th><th>Their vertical</th><th>Goal</th><th>Looking for</th><th>Free text</th><th>Match?</th></tr>';
+    var body = rows.map(function(r){
+      var wanted = [].concat(r.wanted_vertical || []).join(", ") || (r.wanted_org_type || "");
+      return '<tr>' +
+        '<td>' + new Date(r.created_at).toLocaleDateString() + '</td>' +
+        '<td>' + esc(r.name) + '</td>' +
+        '<td>' + esc(r.self_vertical) + '</td>' +
+        '<td>' + esc(r.goal) + (r.goal_detail ? ' <span class="pill">' + esc(r.goal_detail) + '</span>' : '') + '</td>' +
+        '<td>' + esc(wanted) + (r.wanted_country ? ' <span class="pill">' + esc(r.wanted_country) + '</span>' : '') + '</td>' +
+        '<td>' + esc(r.free_text) + '</td>' +
+        '<td><span class="pill' + (r.matched ? ' matched' : '') + '">' + (r.matched ? "Yes" : "No") + '</span></td>' +
+        '</tr>';
+    }).join("");
+    table.innerHTML = head + body;
+
     document.getElementById("updated").textContent = "Updated: " + new Date(d.generated_at).toLocaleString();
   })
   .catch(function(){
