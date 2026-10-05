@@ -429,15 +429,19 @@ ${candidateLines}`;
     model: MODEL,
     shown: true,
   }));
+  let insertedSuggestions = [];
   if (suggestionRows.length) {
-    await supabase.from('suggestions').insert(suggestionRows);
+    const { data } = await supabase.from('suggestions').insert(suggestionRows).select('id, talent_id');
+    insertedSuggestions = data || [];
   }
+  const suggestionIdByTalentId = Object.fromEntries(insertedSuggestions.map((s) => [s.talent_id, s.id]));
 
   const matches = picks
     .map((p) => {
       const c = candidateById[p.talent_id];
       if (!c) return null;
       return {
+        suggestion_id: suggestionIdByTalentId[p.talent_id] || null,
         name: `${c.first_name} ${c.last_name}`,
         headline: c.headline || c.title || '',
         reason: p.reason,

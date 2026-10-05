@@ -647,8 +647,22 @@
           '<p class="match-reason">' + m.reason + '</p>' +
           '<a class="connect-btn" href="' + m.connect_url + '" target="_blank" rel="noopener">Connect →</a>' +
         '</div>';
+      var link = card.querySelector(".connect-btn");
+      link.addEventListener("click", function(){ trackConnectClick(m.suggestion_id); });
       container.appendChild(card);
     });
+  }
+
+  function trackConnectClick(suggestionId){
+    if (!suggestionId) return;
+    try {
+      var payload = JSON.stringify({ suggestion_id: suggestionId });
+      if (navigator.sendBeacon){
+        navigator.sendBeacon("/api/track-click", new Blob([payload], { type: "application/json" }));
+      } else {
+        fetch("/api/track-click", { method: "POST", headers: { "Content-Type": "application/json" }, body: payload, keepalive: true });
+      }
+    } catch (e){ /* best-effort only, never block navigation */ }
   }
 
   function renderNoMatch(note){
