@@ -492,6 +492,22 @@ ${candidateLines}`;
     }
   }
 
+  // Diagnostic flags - cheap, structured signals for patterns worth watching
+  // over time (e.g. "the LLM keeps rejecting candidates for this reason"),
+  // separate from the user-facing confidence reason. Not used in the live
+  // response at all - purely for the periodic insight-monitoring routine.
+  const diagnosticFlags = [];
+  if (picks.length === 0 && wantedVerticals.length > 1) {
+    const coveredVerticals = new Set(shortlist.map((c) => c.vertical));
+    const missingVerticals = wantedVerticals.filter((v) => !coveredVerticals.has(v));
+    if (missingVerticals.length) {
+      diagnosticFlags.push('vertical_coverage_gap');
+    }
+  }
+  if (diagnosticFlags.length) {
+    await supabase.from('responses').update({ diagnostic_flags: diagnosticFlags }).eq('id', responseId);
+  }
+
   // 4. Persist suggestions for later review and for anti-saturation counting.
   const candidateById = Object.fromEntries(shortlist.map((c) => [c.talent_id, c]));
   const suggestionRows = picks.map((p, i) => ({
