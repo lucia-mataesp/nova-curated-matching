@@ -310,7 +310,11 @@ module.exports = async (req, res) => {
     if (!state.dropCountry && countryDbValues) {
       q = q.in('country', countryDbValues);
     }
-    if (!state.dropVertical && wantedVerticals.length) q = q.in('vertical', wantedVerticals);
+    if (!state.dropVertical && wantedVerticals.length) {
+      q = state.verticalMode === 'past'
+        ? q.overlaps('past_verticals', wantedVerticals)
+        : q.in('vertical', wantedVerticals);
+    }
     if (!state.dropSeniority && responseRow.wanted_seniority && responseRow.wanted_seniority !== 'No preference') {
       q = q.in('seniority', seniorityAtLeast(responseRow.wanted_seniority));
     }
@@ -370,6 +374,18 @@ module.exports = async (req, res) => {
     }
   }
 
+  // Layer 2b (soft) - vertical via past experience, not just current role.
+  // Someone whose CURRENT role isn't a requested vertical, but who genuinely
+  // has history in one (e.g. was a CHRO before moving into a different role),
+  // is folded in too - tagged so Layer 5 can tell current-role matches from
+  // background-only matches apart, and must say so explicitly when it picks one.
+  if (wantedVerticals.length && !appliedState.dropVertical) {
+    const poolIds = new Set(pool.map((c) => c.talent_id));
+    const { data: pastData } = await buildQuery({ ...appliedState, verticalMode: 'past' });
+    const extra = (pastData || []).filter((c) => !poolIds.has(c.talent_id) && !wantedVerticals.includes(c.vertical));
+    if (extra.length) pool = [...pool, ...extra.map((c) => ({ ...c, _viaPastVertical: true }))];
+  }
+
   // Layer 4 - anti-saturation: deprioritize people suggested a lot recently.
   const sinceDate = new Date(Date.now() - ANTI_SATURATION_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString();
   const talentIds = pool.map((c) => c.talent_id);
@@ -402,6 +418,12 @@ module.exports = async (req, res) => {
       if (aMentor !== bMentor) return aMentor - bMentor;
     }
 
+    // A current-role vertical match is a safer bet than one found only through
+    // past experience - prefer it, without excluding the background match.
+    const aPast = a._viaPastVertical ? 1 : 0;
+    const bPast = b._viaPastVertical ? 1 : 0;
+    if (aPast !== bPast) return aPast - bPast;
+
     // Among otherwise-similar candidates, someone active in the last 30 days
     // is a better bet than someone who may not even check Nova Connect anymore.
     const aActive = isRecentlyActive(a) ? 0 : 1;
@@ -415,14 +437,23 @@ module.exports = async (req, res) => {
 
   // 3. Layer 5 - LLM ranking + confidence.
   const VERTICAL_LABELS = Object.fromEntries(Object.entries(VERTICAL_MAP).map(([label, code]) => [code, label]));
-  const candidateLines = shortlist.map((c) => (
-    `id=${c.talent_id} | name=${c.first_name} ${c.last_name} | headline=${c.headline || c.title || ''} | company=${c.company || ''} | vertical=${VERTICAL_LABELS[c.vertical] || c.vertical || ''} | seniority=${c.seniority || 'unknown'} | org_type=${c.org_type || 'unknown'} | scope=${c.scope || 'unknown'}${isMentorshipGoal ? ` | mentor=${c.mentor_available ? 'yes, available' : (c.is_mentor ? 'yes, not currently available' : 'no')}` : ''}`
-  )).join('\n');
+  const candidateLines = shortlist.map((c) => {
+    let pastNote = '';
+    if (c._viaPastVertical && c.past_vertical_detail) {
+      const matchedCode = wantedVerticals.find((v) => (c.past_verticals || []).includes(v));
+      const detail = matchedCode && c.past_vertical_detail[matchedCode];
+      if (detail) {
+        pastNote = ` | PAST EXPERIENCE (not current role): ${VERTICAL_LABELS[matchedCode] || matchedCode} - ${detail}`;
+      }
+    }
+    return `id=${c.talent_id} | name=${c.first_name} ${c.last_name} | headline=${c.headline || c.title || ''} | company=${c.company || ''} | vertical=${VERTICAL_LABELS[c.vertical] || c.vertical || ''} | seniority=${c.seniority || 'unknown'} | org_type=${c.org_type || 'unknown'} | scope=${c.scope || 'unknown'}${isMentorshipGoal ? ` | mentor=${c.mentor_available ? 'yes, available' : (c.is_mentor ? 'yes, not currently available' : 'no')}` : ''}${pastNote}`;
+  }).join('\n');
 
   const systemPrompt = `You are helping Nova Talent, a professional community, match a member with 1-3 people worth introducing them to.
 You will get a requester's stated goal and free-text description, plus a shortlist of candidates who already passed hard filters (organization type, scope, country, vertical, seniority).
 Your job: pick the best 1-3 candidates from the shortlist (or fewer if none are a good fit - never invent a candidate not in the list), write a one-sentence reason for each grounded in their actual profile data, and give an honest overall confidence score from 0 to 100 for how well this shortlist satisfies the request.
 If the requester named a specific company and no candidate is from that company, say so plainly in the reason for whichever candidate you pick instead (e.g. "not at Google, but a similarly-sized global tech company").
+Some candidates are marked "PAST EXPERIENCE (not current role)" - their CURRENT job isn't in the requested vertical, but they have real history in it. If you pick one of these, you must say so explicitly and naturally in the reason (e.g. "though now an Operations lead, spent 2 years as CHRO at X") - never imply it's their current role when it isn't.
 ${isMentorshipGoal ? 'The requester is looking for mentorship - candidates marked as an available mentor should be strongly preferred when they otherwise fit, since they have explicitly opted in to mentoring.\n' : ''}Respond with ONLY a JSON object, no markdown fences, no explanation outside the JSON, in this exact shape:
 {"picks": [{"talent_id": 12345, "reason": "..."}], "confidence": 0-100}`;
 
