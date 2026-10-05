@@ -32,14 +32,23 @@
     font-family:var(--font-body);
     -webkit-font-smoothing:antialiased;
   }
-  .wrap{ max-width:720px; margin:0 auto; padding:0 24px; }
+  .wrap{ max-width:1040px; margin:0 auto; padding:0 24px; }
+  .form-wrap{ max-width:720px; margin:0 auto; }
   a{ color:inherit; }
   [hidden]{ display:none !important; }
 
   header{ padding:32px 0 0; }
   .logo{ height:26px; display:block; }
 
-  .hero{ padding:64px 0 56px; text-align:left; }
+  .hero-row{ display:grid; grid-template-columns:1.05fr 0.95fr; gap:40px; align-items:center; padding:56px 0; }
+  .hero{ padding:0; text-align:left; }
+  .hero-steps .kicker{ margin:0 0 12px 0; }
+  .hero-steps h2{ font-size:22px; margin:0 0 18px 0; }
+  .hero-steps .steps{ gap:12px; }
+  .hero-steps .step{ padding:14px 16px; gap:12px; border-radius:12px; }
+  .hero-steps .step .num{ width:24px; height:24px; font-size:12px; }
+  .hero-steps .step h3{ font-size:14.5px; margin:0 0 3px 0; }
+  .hero-steps .step p{ font-size:13px; line-height:1.5; }
   .eyebrow{
     display:inline-flex; align-items:center; gap:8px;
     font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase;
@@ -178,9 +187,12 @@
   .connect-btn.pending{ background:var(--surface-2); color:var(--text-muted); cursor:default; border:1px dashed var(--border); }
   .example-tag{ font-size:11px; color:var(--text-muted); margin-top:6px; }
 
+  @media (max-width:860px){
+    .hero-row{ grid-template-columns:1fr; gap:36px; padding:48px 0 32px; }
+  }
+
   @media (max-width:560px){
     h1{ font-size:32px; }
-    .hero{ padding:48px 0 40px; }
     .cta{ width:100%; justify-content:center; }
     .match-card{ flex-direction:column; align-items:flex-start; }
   }
@@ -205,41 +217,43 @@
 
     <!-- ===== PITCH VIEW ===== -->
     <div id="pitchView">
-      <section class="hero">
-        <div class="eyebrow"><span class="dot"></span> Curated Matching</div>
-        <h1>Your next valuable connection could be <em>closer than you think.</em></h1>
-        <p class="lede">Nova is a community of thousands of professionals — but finding the right person to talk to shouldn't feel like searching a haystack. Tell us who you'd like to meet, and we'll do the searching for you.</p>
-        <button class="cta" id="startBtn">Find your match →</button>
-        <p class="cta-note">Takes about 3 minutes.</p>
-      </section>
+      <div class="hero-row">
+        <section class="hero">
+          <div class="eyebrow"><span class="dot"></span> Curated Matching</div>
+          <h1>Your next valuable connection could be <em>closer than you think.</em></h1>
+          <p class="lede">Nova is a community of thousands of professionals — but finding the right person to talk to shouldn't feel like searching a haystack. Tell us who you'd like to meet, and we'll do the searching for you.</p>
+          <button class="cta" id="startBtn">Find your match →</button>
+          <p class="cta-note">Takes about 3 minutes.</p>
+        </section>
 
-      <section class="block">
-        <p class="kicker">How it works</p>
-        <h2>Three steps, no guesswork.</h2>
-        <div class="steps">
-          <div class="step">
-            <div class="num">1</div>
-            <div>
-              <h3>Tell us who you'd like to meet</h3>
-              <p>A few questions about your own background, and about the kind of person and conversation you're looking for.</p>
+        <section class="hero-steps">
+          <p class="kicker">How it works</p>
+          <h2>Three steps, no guesswork.</h2>
+          <div class="steps">
+            <div class="step">
+              <div class="num">1</div>
+              <div>
+                <h3>Tell us who you'd like to meet</h3>
+                <p>A few questions about your own background, and about the kind of person and conversation you're looking for.</p>
+              </div>
+            </div>
+            <div class="step">
+              <div class="num">2</div>
+              <div>
+                <h3>We find someone relevant</h3>
+                <p>We look across the Nova community for people who actually match what you're after — not just a keyword, a genuinely relevant fit.</p>
+              </div>
+            </div>
+            <div class="step">
+              <div class="num">3</div>
+              <div>
+                <h3>You reach out, on your terms</h3>
+                <p>We show you 1-3 people worth meeting and why. If one looks right, you send the connection request yourself, directly on their Nova profile.</p>
+              </div>
             </div>
           </div>
-          <div class="step">
-            <div class="num">2</div>
-            <div>
-              <h3>We find someone relevant</h3>
-              <p>We look across the Nova community for people who actually match what you're after — not just a keyword, a genuinely relevant fit.</p>
-            </div>
-          </div>
-          <div class="step">
-            <div class="num">3</div>
-            <div>
-              <h3>You reach out, on your terms</h3>
-              <p>We show you 1-3 people worth meeting and why. If one looks right, you send the connection request yourself, directly on their Nova profile.</p>
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
       <section class="closing">
         <h2>Ready to find yours?</h2>
@@ -249,7 +263,7 @@
     </div>
 
     <!-- ===== FORM VIEW ===== -->
-    <div id="formView" hidden>
+    <div id="formView" class="form-wrap" hidden>
       <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
       <form id="stepForm">
         <p class="field-kicker" id="fieldKicker"></p>
@@ -264,7 +278,7 @@
     </div>
 
     <!-- ===== RESULTS VIEW ===== -->
-    <div id="resultsView" hidden>
+    <div id="resultsView" class="form-wrap" hidden>
       <p class="kicker">Your suggestions</p>
       <h2>People worth meeting</h2>
       <div class="match-cards" id="matchCards"></div>
