@@ -23,8 +23,17 @@ module.exports = async (req, res) => {
   // round trips, and it lets us build the per-response list from the same data.
   const { data: responses } = await supabase
     .from('responses')
-    .select('id, created_at, name, self_vertical, self_department, self_seniority, goal, goal_detail, wanted_org_type, wanted_vertical, wanted_department, wanted_country, free_text')
+    .select('id, created_at, name, self_vertical, self_department, self_seniority, goal, goal_detail, wanted_org_type, wanted_vertical, wanted_department, wanted_country, free_text, form_rating')
     .order('created_at', { ascending: false });
+
+  const { data: feedbackRows } = await supabase.from('suggestions').select('feedback').not('feedback', 'is', null);
+  const matchFeedbackUp = (feedbackRows || []).filter((r) => r.feedback === 'up').length;
+  const matchFeedbackDown = (feedbackRows || []).filter((r) => r.feedback === 'down').length;
+
+  const formRatings = (responses || []).map((r) => r.form_rating).filter((v) => v != null);
+  const avgFormRating = formRatings.length
+    ? Math.round((formRatings.reduce((a, b) => a + b, 0) / formRatings.length) * 10) / 10
+    : null;
 
   function countBy(rows, getValue) {
     const counts = {};
@@ -64,6 +73,10 @@ module.exports = async (req, res) => {
     suggestions_clicked: totalClicked || 0,
     click_through_rate_pct: clickThroughRate,
     responses_with_no_match: noMatchResponses || 0,
+    avg_form_rating: avgFormRating,
+    form_ratings_count: formRatings.length,
+    match_feedback_up: matchFeedbackUp,
+    match_feedback_down: matchFeedbackDown,
     goal_breakdown: goalBreakdown,
     wanted_vertical_breakdown: wantedVerticalBreakdown,
     wanted_department_breakdown: wantedDepartmentBreakdown,

@@ -186,6 +186,30 @@
   .connect-btn.pending{ background:var(--surface-2); color:var(--text-muted); cursor:default; border:1px dashed var(--border); }
   .example-tag{ font-size:11px; color:var(--text-muted); margin-top:6px; }
 
+  .match-feedback{ display:flex; align-items:center; gap:8px; margin-top:12px; }
+  .fb-btn{
+    background:none; border:1px solid var(--border); border-radius:8px;
+    width:32px; height:32px; font-size:15px; cursor:pointer; color:var(--text-muted);
+    display:flex; align-items:center; justify-content:center; transition:background .15s ease, border-color .15s ease;
+  }
+  .fb-btn:hover{ border-color:var(--accent); }
+  .fb-btn.selected{ background:rgba(14,176,164,0.18); border-color:var(--accent); color:var(--accent); }
+  .fb-thanks{ font-size:12.5px; color:var(--text-muted); }
+
+  .form-feedback{
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:18px 20px; margin-top:28px; text-align:center;
+  }
+  .form-feedback p{ margin:0 0 10px 0; font-size:13.5px; color:var(--text-muted); }
+  .form-feedback .scale{ display:flex; justify-content:center; gap:8px; }
+  .scale-btn{
+    background:var(--surface-2); border:1px solid var(--border); border-radius:50%;
+    width:38px; height:38px; font-size:17px; cursor:pointer; color:var(--text);
+    display:flex; align-items:center; justify-content:center; transition:background .15s ease, border-color .15s ease;
+  }
+  .scale-btn:hover{ border-color:var(--accent); }
+  .scale-btn.selected{ background:rgba(14,176,164,0.18); border-color:var(--accent); }
+
   @media (max-width:860px){
     .hero-row{ grid-template-columns:1fr; gap:36px; padding:48px 0 32px; }
   }
@@ -635,7 +659,7 @@
     }, 1000);
   }
 
-  function renderMatches(matches, lowConfidence, note){
+  function renderMatches(matches, lowConfidence, note, responseId){
     clearLoadingTimer();
     document.querySelector("#resultsView .kicker").textContent = "Your suggestions";
     document.querySelector("#resultsView h2").textContent = "People worth meeting";
@@ -656,11 +680,63 @@
           '<p class="match-name">' + m.name + '</p>' +
           '<p class="match-reason">' + m.reason + '</p>' +
           '<a class="connect-btn" href="' + m.connect_url + '" target="_blank" rel="noopener">Connect →</a>' +
+          '<div class="match-feedback" data-fb></div>' +
         '</div>';
       var link = card.querySelector(".connect-btn");
       link.addEventListener("click", function(){ trackConnectClick(m.suggestion_id); });
+      renderMatchFeedback(card.querySelector("[data-fb]"), m.suggestion_id);
       container.appendChild(card);
     });
+    renderFormFeedback(container.parentNode, responseId);
+  }
+
+  function renderMatchFeedback(el, suggestionId){
+    if (!el || !suggestionId) return;
+    el.innerHTML =
+      '<span style="font-size:12.5px; color:var(--text-muted);">Good suggestion?</span>' +
+      '<button type="button" class="fb-btn" data-v="up">👍</button>' +
+      '<button type="button" class="fb-btn" data-v="down">👎</button>';
+    var buttons = el.querySelectorAll(".fb-btn");
+    buttons.forEach(function(btn){
+      btn.addEventListener("click", function(){
+        if (el.dataset.sent) return;
+        el.dataset.sent = "1";
+        buttons.forEach(function(b){ b.classList.toggle("selected", b === btn); b.disabled = true; });
+        sendFeedback("match", suggestionId, btn.getAttribute("data-v"));
+      });
+    });
+  }
+
+  function renderFormFeedback(parentEl, responseId){
+    if (!responseId || !parentEl) return;
+    var box = document.createElement("div");
+    box.className = "form-feedback";
+    box.innerHTML =
+      '<p>How easy was this form to fill out?</p>' +
+      '<div class="scale">' +
+        [1,2,3,4,5].map(function(n){ return '<button type="button" class="scale-btn" data-v="' + n + '">' + n + '</button>'; }).join("") +
+      '</div>';
+    parentEl.appendChild(box);
+    var buttons = box.querySelectorAll(".scale-btn");
+    buttons.forEach(function(btn){
+      btn.addEventListener("click", function(){
+        if (box.dataset.sent) return;
+        box.dataset.sent = "1";
+        buttons.forEach(function(b){ b.classList.toggle("selected", b === btn); b.disabled = true; });
+        box.querySelector("p").textContent = "Thanks for the feedback!";
+        sendFeedback("form", responseId, parseInt(btn.getAttribute("data-v"), 10));
+      });
+    });
+  }
+
+  function sendFeedback(type, id, value){
+    try {
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: type, id: id, value: value }),
+      });
+    } catch (e){ /* best-effort only */ }
   }
 
   function trackConnectClick(suggestionId){
@@ -675,12 +751,14 @@
     } catch (e){ /* best-effort only, never block navigation */ }
   }
 
-  function renderNoMatch(note){
+  function renderNoMatch(note, responseId){
     clearLoadingTimer();
     document.querySelector("#resultsView .kicker").textContent = "Your suggestions";
     document.querySelector("#resultsView h2").textContent = "Still looking";
-    document.getElementById("matchCards").innerHTML =
+    var container = document.getElementById("matchCards");
+    container.innerHTML =
       '<p style="color:var(--text-muted); font-size:14px;">' + (note || "We don't have a strong match yet — we'll keep looking and follow up personally once we do.") + '</p>';
+    renderFormFeedback(container.parentNode, responseId);
   }
 
   function renderError(){
@@ -701,9 +779,9 @@
       .then(function(r){ return r.json(); })
       .then(function(data){
         if (data.matches && data.matches.length){
-          renderMatches(data.matches, data.lowConfidence, data.note);
+          renderMatches(data.matches, data.lowConfidence, data.note, data.response_id);
         } else {
-          renderNoMatch(data.note);
+          renderNoMatch(data.note, data.response_id);
         }
       })
       .catch(function(){ renderError(); });

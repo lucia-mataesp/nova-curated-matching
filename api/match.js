@@ -346,7 +346,7 @@ module.exports = async (req, res) => {
   }
 
   if (!filtered) {
-    res.status(200).json({ matches: [], note: 'No candidates matched the hard filters, even after relaxing most of them.' });
+    res.status(200).json({ matches: [], note: 'No candidates matched the hard filters, even after relaxing most of them.', response_id: responseId });
     return;
   }
 
@@ -464,7 +464,7 @@ ${candidateLines}`;
   }
 
   if (!llmResult || !Array.isArray(llmResult.picks)) {
-    res.status(200).json({ matches: [], note: 'Could not parse a valid shortlist from the model.' });
+    res.status(200).json({ matches: [], note: 'Could not parse a valid shortlist from the model.', response_id: responseId });
     return;
   }
 
@@ -528,6 +528,7 @@ ${candidateLines}`;
     matches,
     confidence,
     lowConfidence,
+    response_id: responseId,
     note: matches.length === 0
       ? 'Could not find anyone worth suggesting from the shortlist.'
       : (lowConfidence ? `These are the best people we found, though ${confidenceReason} - take the reasons with a grain of salt.` : null),

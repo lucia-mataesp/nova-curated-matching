@@ -88,6 +88,8 @@ fetch("/api/stats")
       { num: d.suggestions_clicked, label: "\"Connect\" clicks" },
       { num: (d.click_through_rate_pct != null ? d.click_through_rate_pct + "%" : "—"), label: "Shown → clicked rate" },
       { num: d.responses_with_no_match, label: "Responses with no match" },
+      { num: (d.avg_form_rating != null ? d.avg_form_rating + "/5" : "—"), label: "Avg. form rating (" + d.form_ratings_count + ")" },
+      { num: d.match_feedback_up + " 👍 / " + d.match_feedback_down + " 👎", label: "Match feedback" },
     ];
     tiles.forEach(function(t){
       var div = document.createElement("div");
