@@ -109,9 +109,6 @@
   .step p{ margin:0; font-size:14.5px; line-height:1.6; color:var(--text-muted); }
 
 
-  .closing{ text-align:center; padding:56px 0 72px; }
-  .closing h2{ margin:0 0 14px 0; }
-  .closing p{ color:var(--text-muted); font-size:15px; margin:0 0 32px 0; }
 
   footer{
     border-top:1px solid var(--border);
@@ -254,12 +251,6 @@
           </div>
         </section>
       </div>
-
-      <section class="closing">
-        <h2>Ready to find yours?</h2>
-        <p>It only takes a few minutes to tell us who you're looking for.</p>
-        <button class="cta" id="startBtn2">Find your match →</button>
-      </section>
     </div>
 
     <!-- ===== FORM VIEW ===== -->
@@ -456,7 +447,6 @@
     window.scrollTo({top:0, behavior:"instant"});
   }
   document.getElementById("startBtn").addEventListener("click", startForm);
-  document.getElementById("startBtn2").addEventListener("click", startForm);
 
   function currentRef(){ return history[history.length - 1]; }
 
