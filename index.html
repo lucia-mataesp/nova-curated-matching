@@ -210,6 +210,21 @@
   .scale-btn:hover{ border-color:var(--accent); }
   .scale-btn.selected{ background:rgba(14,176,164,0.18); border-color:var(--accent); }
 
+  .fb-detail{ margin-top:16px; display:flex; flex-direction:column; gap:10px; align-items:stretch; }
+  .fb-detail-text{
+    width:100%; min-height:64px; resize:vertical;
+    background:var(--surface-2); border:1px solid var(--border); border-radius:10px;
+    color:var(--text); font-family:var(--font-body); font-size:13.5px; padding:10px 12px;
+  }
+  .fb-detail-text:focus{ outline:none; border-color:var(--accent); }
+  .fb-detail-send{
+    align-self:center; background:none; border:1px solid var(--border); border-radius:9px;
+    color:var(--text-muted); font-family:var(--font-body); font-weight:600; font-size:13px;
+    padding:8px 18px; cursor:pointer;
+  }
+  .fb-detail-send:hover:not(:disabled){ border-color:var(--accent); color:var(--accent); }
+  .fb-detail-send:disabled{ cursor:default; opacity:0.7; }
+
   @media (max-width:860px){
     .hero-row{ grid-template-columns:1fr; gap:36px; padding:48px 0 32px; }
   }
@@ -702,7 +717,7 @@
         if (el.dataset.sent) return;
         el.dataset.sent = "1";
         buttons.forEach(function(b){ b.classList.toggle("selected", b === btn); b.disabled = true; });
-        sendFeedback("match", suggestionId, btn.getAttribute("data-v"));
+        sendFeedback({ type: "match", id: suggestionId, value: btn.getAttribute("data-v") });
       });
     });
   }
@@ -715,26 +730,44 @@
       '<p>How easy was this form to fill out?</p>' +
       '<div class="scale">' +
         [1,2,3,4,5].map(function(n){ return '<button type="button" class="scale-btn" data-v="' + n + '">' + n + '</button>'; }).join("") +
+      '</div>' +
+      '<div class="fb-detail" hidden>' +
+        '<textarea class="fb-detail-text" maxlength="1000" placeholder="Anything we should improve? (optional)"></textarea>' +
+        '<button type="button" class="fb-detail-send">Send</button>' +
       '</div>';
     parentEl.appendChild(box);
     var buttons = box.querySelectorAll(".scale-btn");
+    var detail = box.querySelector(".fb-detail");
+    var textarea = box.querySelector(".fb-detail-text");
+    var sendBtn = box.querySelector(".fb-detail-send");
+
     buttons.forEach(function(btn){
       btn.addEventListener("click", function(){
         if (box.dataset.sent) return;
         box.dataset.sent = "1";
         buttons.forEach(function(b){ b.classList.toggle("selected", b === btn); b.disabled = true; });
-        box.querySelector("p").textContent = "Thanks for the feedback!";
-        sendFeedback("form", responseId, parseInt(btn.getAttribute("data-v"), 10));
+        box.querySelector("p").textContent = "Thanks for the feedback! Anything specific we should improve?";
+        detail.hidden = false;
+        sendFeedback({ type: "form", id: responseId, value: parseInt(btn.getAttribute("data-v"), 10) });
       });
+    });
+
+    sendBtn.addEventListener("click", function(){
+      var text = textarea.value.trim();
+      if (!text || sendBtn.disabled) return;
+      sendBtn.disabled = true;
+      sendBtn.textContent = "Sent, thank you!";
+      textarea.disabled = true;
+      sendFeedback({ type: "form", id: responseId, text: text });
     });
   }
 
-  function sendFeedback(type, id, value){
+  function sendFeedback(payload){
     try {
       fetch("/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: type, id: id, value: value }),
+        body: JSON.stringify(payload),
       });
     } catch (e){ /* best-effort only */ }
   }

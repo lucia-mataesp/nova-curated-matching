@@ -21,7 +21,7 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const { type, id, value } = body || {};
+  const { type, id, value, text } = body || {};
   if (!id || !type) {
     res.status(400).json({ error: 'Missing type or id' });
     return;
@@ -30,13 +30,30 @@ module.exports = async (req, res) => {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   if (type === 'form') {
-    const rating = parseInt(value, 10);
-    if (!(rating >= 1 && rating <= 5)) {
-      res.status(400).json({ error: 'form rating must be 1-5' });
+    const update = {};
+    if (value !== undefined) {
+      const rating = parseInt(value, 10);
+      if (!(rating >= 1 && rating <= 5)) {
+        res.status(400).json({ error: 'form rating must be 1-5' });
+        return;
+      }
+      update.form_rating = rating;
+    }
+    if (typeof text === 'string' && text.trim()) {
+      update.form_feedback_text = text.trim().slice(0, 1000);
+    }
+    if (!Object.keys(update).length) {
+      res.status(400).json({ error: 'Nothing to update' });
       return;
     }
-    // Only set once - don't let a double-click or re-render overwrite the first answer.
-    await supabase.from('responses').update({ form_rating: rating }).eq('id', id).is('form_rating', null);
+    // Rating is set-once (don't let a double-click overwrite the first answer),
+    // but the optional free-text comment is a separate, deliberate action (the
+    // person clicks "Send" after typing) so it's fine to let it through plainly.
+    if (update.form_rating !== undefined) {
+      await supabase.from('responses').update(update).eq('id', id).is('form_rating', null);
+    } else {
+      await supabase.from('responses').update(update).eq('id', id);
+    }
   } else if (type === 'match') {
     if (value !== 'up' && value !== 'down') {
       res.status(400).json({ error: 'match feedback must be up or down' });

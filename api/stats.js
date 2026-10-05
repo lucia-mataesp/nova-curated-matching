@@ -23,7 +23,7 @@ module.exports = async (req, res) => {
   // round trips, and it lets us build the per-response list from the same data.
   const { data: responses } = await supabase
     .from('responses')
-    .select('id, created_at, name, self_vertical, self_department, self_seniority, goal, goal_detail, wanted_org_type, wanted_vertical, wanted_department, wanted_country, free_text, form_rating')
+    .select('id, created_at, name, self_vertical, self_department, self_seniority, goal, goal_detail, wanted_org_type, wanted_vertical, wanted_department, wanted_country, free_text, form_rating, form_feedback_text')
     .order('created_at', { ascending: false });
 
   const { data: feedbackRows } = await supabase.from('suggestions').select('feedback').not('feedback', 'is', null);
@@ -67,6 +67,10 @@ module.exports = async (req, res) => {
     matched: respondedWithMatch.has(r.id),
   }));
 
+  const formFeedbackComments = rows
+    .filter((r) => r.form_feedback_text)
+    .map((r) => ({ created_at: r.created_at, rating: r.form_rating, text: r.form_feedback_text }));
+
   const payload = {
     total_responses: totalResponses || 0,
     suggestions_shown: totalShown || 0,
@@ -82,6 +86,7 @@ module.exports = async (req, res) => {
     wanted_department_breakdown: wantedDepartmentBreakdown,
     self_vertical_breakdown: selfVerticalBreakdown,
     recent_responses: recentResponses,
+    form_feedback_comments: formFeedbackComments,
     generated_at: new Date().toISOString(),
   };
 

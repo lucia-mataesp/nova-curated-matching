@@ -38,6 +38,9 @@
   <h2>What people are asking for</h2>
   <div class="bar-section" id="breakdowns"></div>
 
+  <h2>Form feedback comments</h2>
+  <div id="formFeedback"></div>
+
   <h2>Responses</h2>
   <table class="resp-table" id="respTable"></table>
 
@@ -103,6 +106,21 @@ fetch("/api/stats")
     renderBars(breakdowns, "Vertical they're looking for", d.wanted_vertical_breakdown || []);
     renderBars(breakdowns, "Department they're looking for", d.wanted_department_breakdown || []);
     renderBars(breakdowns, "Requesters' own vertical (who's using the tool)", d.self_vertical_breakdown || []);
+
+    var fbContainer = document.getElementById("formFeedback");
+    var comments = d.form_feedback_comments || [];
+    if (!comments.length){
+      fbContainer.innerHTML = '<p style="font-size:13px; color:var(--text-muted);">No comments yet.</p>';
+    } else {
+      fbContainer.innerHTML = comments.map(function(c){
+        return '<div class="tile" style="margin-bottom:10px;">' +
+          '<div style="font-size:13px; color:var(--text-muted); margin-bottom:6px;">' +
+            new Date(c.created_at).toLocaleDateString() + (c.rating ? ' · rated ' + c.rating + '/5' : '') +
+          '</div>' +
+          '<div style="font-size:14px;">' + esc(c.text) + '</div>' +
+        '</div>';
+      }).join("");
+    }
 
     var table = document.getElementById("respTable");
     var rows = d.recent_responses || [];
