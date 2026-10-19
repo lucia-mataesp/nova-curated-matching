@@ -23,7 +23,7 @@ module.exports = async (req, res) => {
   // round trips, and it lets us build the per-response list from the same data.
   const { data: responses } = await supabase
     .from('responses')
-    .select('id, created_at, name, self_vertical, self_department, self_seniority, goal, goal_detail, wanted_org_type, wanted_vertical, wanted_department, wanted_country, free_text, form_rating, form_feedback_text, diagnostic_flags')
+    .select('id, created_at, name, self_vertical, self_seniority, goal, goal_detail, wanted_org_type, wanted_vertical, wanted_country, free_text, form_rating, form_feedback_text, diagnostic_flags')
     .order('created_at', { ascending: false });
 
   const { data: feedbackRows } = await supabase.from('suggestions').select('feedback').not('feedback', 'is', null);
@@ -51,7 +51,6 @@ module.exports = async (req, res) => {
   const rows = responses || [];
   const goalBreakdown = countBy(rows, (r) => r.goal);
   const wantedVerticalBreakdown = countBy(rows, (r) => r.wanted_vertical);
-  const wantedDepartmentBreakdown = countBy(rows, (r) => r.wanted_department);
   const selfVerticalBreakdown = countBy(rows, (r) => r.self_vertical);
 
   const recentResponses = rows.slice(0, 50).map((r) => ({
@@ -88,7 +87,6 @@ module.exports = async (req, res) => {
     match_feedback_down: matchFeedbackDown,
     goal_breakdown: goalBreakdown,
     wanted_vertical_breakdown: wantedVerticalBreakdown,
-    wanted_department_breakdown: wantedDepartmentBreakdown,
     self_vertical_breakdown: selfVerticalBreakdown,
     recent_responses: recentResponses,
     form_feedback_comments: formFeedbackComments,

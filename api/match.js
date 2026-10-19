@@ -243,14 +243,12 @@ module.exports = async (req, res) => {
     self_city: answers.a_ciudad || null,
     self_vertical: answers.a_vertical || null,
     self_role: selfRoleRef ? answers[selfRoleRef] : null,
-    self_department: answers.a_departamento || null,
     self_seniority: answers.a_seniority || null,
     wanted_org_type: answers.b_tipo_org || null,
     wanted_scope: answers.b_alcance || null,
     wanted_country: answers.b_pais || null,
     wanted_specific_company: answers.b_empresa_concreta || null,
     wanted_vertical: Array.isArray(answers.b_vertical) ? answers.b_vertical : (answers.b_vertical ? [answers.b_vertical] : null),
-    wanted_department: answers.b_departamento || null,
     wanted_seniority: answers.b_seniority || null,
     goal: answers.b_objetivo || null,
     goal_detail: answers.b_mentoria_area || answers.b_socio_sector || null,
@@ -462,7 +460,6 @@ ${isMentorshipGoal ? 'The requester is looking for mentorship - candidates marke
   const userPrompt = `Requester's goal: ${responseRow.goal || 'not specified'}
 Requester's specific interest area: ${responseRow.goal_detail || 'none'}
 Requester's specific company request: ${responseRow.wanted_specific_company || 'none'}
-Requester's department preference (soft signal, not a hard filter): ${responseRow.wanted_department || 'no preference'}
 ${wantedOrgTypeDetail ? `Requester's sub-preference within Public sector/Academia/NGO (soft signal - pool data doesn't track this distinction, so use it only as a tiebreaker when a candidate's headline/company clearly indicates it): ${wantedOrgTypeDetail}\n` : ''}${relaxationNote ? `Note: the strict filters matched nobody, so this shortlist comes from a relaxed search (${relaxationNote}) - mention plainly in the reason for whichever candidate you pick which of their requested criteria this person doesn't actually meet.\n` : ''}Requester's free text: "${responseRow.free_text || ''}"
 
 Candidate shortlist:

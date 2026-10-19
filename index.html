@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nova Curated Matching</title>
-<meta name="description" content="Discover your next valuable connection in the Nova community — curated, not random.">
+<meta name="description" content="Discover your next valuable connection in the Nova community: curated, not random.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%230EB0A4%22/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -259,7 +259,7 @@
         <section class="hero">
           <div class="eyebrow"><span class="dot"></span> Curated Matching</div>
           <h1>Your next valuable connection could be <em>closer than you think.</em></h1>
-          <p class="lede">Nova is a community of thousands of professionals — but finding the right person to talk to shouldn't feel like searching a haystack. Tell us who you'd like to meet, and we'll do the searching for you.</p>
+          <p class="lede">Nova is a community of thousands of professionals, but finding the right person to talk to shouldn't feel like searching a haystack. Tell us who you'd like to meet, and we'll do the searching for you.</p>
         </section>
 
         <section class="hero-steps">
@@ -277,7 +277,7 @@
               <div class="num">2</div>
               <div>
                 <h3>We find someone relevant</h3>
-                <p>We look across the Nova community for people who actually match what you're after — not just a keyword, a genuinely relevant fit.</p>
+                <p>We look across the Nova community for people who actually match what you're after: not just a keyword, a genuinely relevant fit.</p>
               </div>
             </div>
             <div class="step">
@@ -345,8 +345,6 @@
     a_ciudad: { title: "What city?", type: "short_text", required: true },
     a_vertical: { title: "What's your professional vertical?", type: "choice", required: true,
       choices: ["CEO / Entrepreneurship","Data Science","Engineering","Finance & Accounting","Human Resources","Investment (PE/VC)","Legal","Life Sciences / Healthcare","Marketing","Operations","Product","Sales & Business Development","Software Development","Strategy","Other"] },
-    a_departamento: { title: "What department do you work in?", type: "dropdown", required: true,
-      choices: ["Accounting","Business Development","Commercial","Communications","Consulting","Customer service","Data management","Engineering","Executive Management (CE)","Finance","Human Resources (HR)","Information Technology (IT)","Legal","Marketing","Mergers and Acquisitions (M&A)","Operations","Product","Research & Development (R&D)","Sales","Strategy","Supply Chain","Other"] },
     a_seniority: { title: "What's your seniority level?", type: "choice", required: true,
       choices: ["Intern","Employee / Analyst","Manager / Team Lead","Senior Manager / Director","C-Level / Executive","Founder / Owner"] },
 
@@ -380,7 +378,7 @@
     a_rol_otro: { title: "Within Other, which best describes your role?", type: "dropdown", required: true,
       choices: ["Academical Researcher","Adjunct Faculty / Professor","Administration Manager","Administrative Coordinator","Administrative Intern","Administrative Specialist","Administrator","Architect","Art Director","Artist","Assistant","Biostatistician","Clerk","Creative Director","Head of R & D","Instructor / Teaching Assistant","Interior Designer","Medical Researcher","Officer","PhD Researcher","Photographer","Postdoc Researcher","Public Servant","R & D Analyst","R & D Intern","R & D Manager","Research Assistant","Researcher","Scientist","Secretary","Statistician","Other / not on the list"] },
 
-    b_tipo_org: { title: "What type of organization should the person you'd like to connect with work at?", desc: "From here on, we're asking about the profile of the person you'd like to meet — not you.", type: "choice", required: true,
+    b_tipo_org: { title: "What type of organization should the person you'd like to connect with work at?", desc: "From here on, we're asking about the profile of the person you'd like to meet, not you.", type: "choice", required: true,
       choices: ["Company / Corporation","Law firm","Consulting firm","Bank / Financial institution","Investment fund (PE/VC)","Startup / Scaleup","Public sector / Academia / NGO","Freelance / Own business","No preference"] },
     b_alcance: { title: "What scope should their organization have?", type: "choice", required: true,
       choices: ["Global / Multinational","International (mid-size)","Large / mid-size local","Small local","No preference"] },
@@ -388,19 +386,17 @@
       choices: ["Public sector / Government","Academia / Research","NGO / Nonprofit"] },
     b_pais: { title: "What country should they work in?", type: "dropdown", required: true,
       choices: ["No preference","Australia","Austria","Belgium","Canada","China","Colombia","Denmark","Finland","France","Germany","India","Ireland","Italy","Luxembourg","Mexico","Netherlands","Norway","Portugal","Singapore","Spain","Sweden","Switzerland","United Arab Emirates","United Kingdom","United States","Other"] },
-    b_empresa_concreta: { title: "Is there a specific company you'd like them to work at?", desc: "Optional — no pressure if not, we'll still find a great match either way.", type: "short_text", required: false },
-    b_vertical: { title: "What vertical should they work in?", desc: "Not sure between two? Select as many as would work — this isn't an either/or.", type: "choice", multi: true, required: true,
+    b_empresa_concreta: { title: "Is there a specific company you'd like them to work at?", desc: "Optional, no pressure if not, we'll still find a great match either way.", type: "short_text", required: false },
+    b_vertical: { title: "What vertical should they work in?", desc: "Not sure between two? Select as many as would work. This isn't an either/or.", type: "choice", multi: true, required: true,
       choices: ["CEO / Entrepreneurship","Data Science","Engineering","Finance & Accounting","Human Resources","Investment (PE/VC)","Legal","Life Sciences / Healthcare","Marketing","Operations","Product","Sales & Business Development","Software Development","Strategy","Other","No preference"] },
-    b_departamento: { title: "What department should they work in?", type: "dropdown", required: true,
-      choices: ["Accounting","Business Development","Commercial","Communications","Consulting","Customer service","Data management","Engineering","Executive Management (CE)","Finance","Human Resources (HR)","Information Technology (IT)","Legal","Marketing","Mergers and Acquisitions (M&A)","Operations","Product","Research & Development (R&D)","Sales","Strategy","Supply Chain","Other","No preference"] },
-    b_seniority: { title: "What's the minimum seniority level they should have?", desc: "This is your preference — we'll do our best to match it, though it's not a strict guarantee.", type: "choice", required: true,
+    b_seniority: { title: "What's the minimum seniority level they should have?", desc: "This is your preference: we'll do our best to match it, though it's not a strict guarantee.", type: "choice", required: true,
       choices: ["Intern","Employee / Analyst","Manager / Team Lead","Senior Manager / Director","C-Level / Executive","Founder / Owner","No preference"] },
     b_objetivo: { title: "What's your goal with this connection?", type: "choice", required: true,
       choices: ["Expand my network","Looking for mentorship / advice","Explore job opportunities","Looking for a co-founder / partner","Business opportunity / client"] },
     b_mentoria_area: { title: "Within mentorship, which specific area interests you most?", type: "choice", required: true,
       choices: ["Grow in my current role (leadership, team management)","Change industry or type of role","Fundraising / raising capital","M&A / deals","MBA / master's degree decision","Consultative B2B sales","Scaling a startup (operational challenges, KPIs, team)"] },
-    b_socio_sector: { title: "Is there a more specific sector or niche within that industry?", desc: "Optional — e.g. football, sustainable fashion, cybersecurity...", type: "short_text", required: false },
-    b_texto_libre: { title: "In one sentence, what would you like to get out of this connection?", desc: "Optional — mention the specific role or function if it matters to you (e.g. \"someone who went from managing campaigns to leading a team\").", type: "long_text", required: false },
+    b_socio_sector: { title: "Is there a more specific sector or niche within that industry?", desc: "Optional, e.g. football, sustainable fashion, cybersecurity...", type: "short_text", required: false },
+    b_texto_libre: { title: "In one sentence, what would you like to get out of this connection?", desc: "Optional, mention the specific role or function if it matters to you (e.g. \"someone who went from managing campaigns to leading a team\").", type: "long_text", required: false },
     consentimiento: { title: "One last thing", type: "legal", required: true,
       label: "I agree that my profile may be shown to another Nova member as a suggested contact for this campaign." }
   };
@@ -439,7 +435,7 @@
       case "a_alcance": return "a_pais";
       case "a_pais": return "a_ciudad";
       case "a_ciudad": return "a_vertical";
-      case "a_vertical": return VERTICAL_TO_ROLE[answers.a_vertical] || "a_departamento";
+      case "a_vertical": return VERTICAL_TO_ROLE[answers.a_vertical] || "a_seniority";
       case "b_tipo_org":
         // Scope (global/local) doesn't map cleanly onto public sector / academia / NGO,
         // so skip it and ask which of the three it actually is instead.
@@ -449,8 +445,7 @@
       case "b_alcance": return "b_pais";
       case "b_pais": return "b_empresa_concreta";
       case "b_empresa_concreta": return "b_vertical";
-      case "b_vertical": return "b_departamento";
-      case "b_departamento": return "b_seniority";
+      case "b_vertical": return "b_seniority";
       case "b_seniority": return "b_objetivo";
       case "b_objetivo":
         if (answers.b_objetivo === "Looking for mentorship / advice") return "b_mentoria_area";
@@ -459,10 +454,9 @@
       case "b_mentoria_area": return "b_texto_libre";
       case "b_socio_sector": return "b_texto_libre";
       case "b_texto_libre": return "consentimiento";
-      case "a_departamento": return "a_seniority";
       case "a_seniority": return "b_tipo_org";
       default:
-        if (ref.indexOf("a_rol_") === 0) return "a_departamento";
+        if (ref.indexOf("a_rol_") === 0) return "a_seniority";
         return null;
     }
   }
@@ -788,7 +782,7 @@
     document.querySelector("#resultsView h2").textContent = "Still looking";
     var container = document.getElementById("matchCards");
     container.innerHTML =
-      '<p style="color:var(--text-muted); font-size:14px;">' + (note || "We don't have a strong match yet — we'll keep looking and follow up personally once we do.") + '</p>';
+      '<p style="color:var(--text-muted); font-size:14px;">' + (note || "We don't have a strong match yet, but we'll keep looking and follow up personally once we do.") + '</p>';
     renderFormFeedback(container.parentNode, responseId);
   }
 

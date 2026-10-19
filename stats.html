@@ -104,7 +104,6 @@ fetch("/api/stats")
     var breakdowns = document.getElementById("breakdowns");
     renderBars(breakdowns, "Goal of the connection", d.goal_breakdown || []);
     renderBars(breakdowns, "Vertical they're looking for", d.wanted_vertical_breakdown || []);
-    renderBars(breakdowns, "Department they're looking for", d.wanted_department_breakdown || []);
     renderBars(breakdowns, "Requesters' own vertical (who's using the tool)", d.self_vertical_breakdown || []);
 
     var fbContainer = document.getElementById("formFeedback");
